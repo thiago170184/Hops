@@ -2083,18 +2083,22 @@
   // Ao trocar de aba, limpa buscas e re-renderiza produtos/operações
   const _setTab = setTab;
   setTab = function(name) {
-    // Limpa campos de busca das outras abas
-    const buscaProd = document.getElementById('busca-prod');
-    if (buscaProd && name !== 'produtos') buscaProd.value = '';
-    const buscaOps = document.getElementById('busca-ops');
-    if (buscaOps && name !== 'operacoes') {
-      buscaOps.value = '';
-      if (typeof aplicarBuscaOps === 'function') aplicarBuscaOps();
-    }
     _setTab(name);
-    if (name === 'produtos') renderProdutos();
-    if (name === 'operacoes') renderOperacoes();
-    if (name === 'cardapio') renderCardapio();
+    try {
+      const buscaProd = document.getElementById('busca-prod');
+      if (buscaProd && name !== 'produtos') buscaProd.value = '';
+      const buscaOps = document.getElementById('busca-ops');
+      if (buscaOps && name !== 'operacoes') {
+        buscaOps.value = '';
+        if (typeof aplicarBuscaOps === 'function') aplicarBuscaOps();
+      }
+      if (name === 'produtos') renderProdutos();
+      if (name === 'operacoes') renderOperacoes();
+      if (name === 'cardapio') renderCardapio();
+    } catch (err) {
+      console.error('Erro ao abrir aba "' + name + '":', err);
+      alert('Erro na aba "' + name + '":\n\n' + (err.message || err) + '\n\nStack:\n' + (err.stack || '').split('\n').slice(0, 5).join('\n'));
+    }
   };
 
   function fmtBRLSimples(n) { return fmtBRL(n); }
