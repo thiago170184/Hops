@@ -1327,8 +1327,8 @@
               <tfoot>
                 <tr>
                   <td colspan="2" style="text-align:right">TOTAL</td>
-                  <td class="num">${totalQtd.toLocaleString('pt-BR')}</td>
-                  <td class="num">${fmtBRL(totalVal)}</td>
+                  <td class="num tfoot-qtd">${totalQtd.toLocaleString('pt-BR')}</td>
+                  <td class="num tfoot-valor">${fmtBRL(totalVal)}</td>
                 </tr>
               </tfoot>
             </table>
@@ -1437,6 +1437,11 @@
         if (sp) sp.textContent = hitsNoCard;
         if (su) su.textContent = qtdCard.toLocaleString('pt-BR');
         if (st) st.textContent = fmtBRL(valorCard);
+        // Atualiza tfoot TOTAL com subtotais filtrados
+        const tfq = card.querySelector('.tfoot-qtd');
+        const tfv = card.querySelector('.tfoot-valor');
+        if (tfq) tfq.textContent = qtdCard.toLocaleString('pt-BR');
+        if (tfv) tfv.textContent = fmtBRL(valorCard);
       } else {
         card.classList.remove('match-busca');
         card.style.display = 'none';
