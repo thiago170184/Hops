@@ -208,20 +208,20 @@
 
 
   /* Filtro de data (integrado no card de filtros) */
-  .filtros .data-grp {
+  .data-grp {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 6px 12px 6px 8px;
     background: var(--bebidas-bg);
     border: 1px solid var(--bebidas-mid);
     border-radius: 8px;
   }
-  .filtros .data-grp svg { color: var(--bebidas); flex-shrink: 0; }
-  .filtros .data-grp .lbl {
+  .data-grp svg { color: var(--bebidas); flex-shrink: 0; }
+  .data-grp .lbl {
     font-size: 9.5px; font-weight: 800;
     letter-spacing: 0.1em; text-transform: uppercase;
     color: var(--bebidas);
   }
-  .filtros .data-grp select {
+  .data-grp select {
     appearance: none;
     padding: 4px 26px 4px 10px;
     font-size: 12px; font-weight: 700; font-family: inherit;
@@ -229,10 +229,43 @@
     border: 1px solid var(--bebidas-mid); border-radius: 6px;
     cursor: pointer; outline: none;
   }
-  .filtros .data-grp .dt-wrap { position: relative; }
-  .filtros .data-grp .dt-wrap::after {
-    content: "▾"; position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-    color: var(--bebidas); pointer-events: none; font-size: 10px;
+  .data-grp .dt-wrap { position: relative; }
+
+  /* Multi-select de datas (substitui o select nativo) */
+  .md-wrap { position: relative; display: inline-block; }
+  .md-btn {
+    appearance: none; display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 10px 4px 10px; min-width: 140px;
+    font-size: 12px; font-weight: 700; font-family: inherit;
+    color: var(--bebidas); background: #fff;
+    border: 1px solid var(--bebidas-mid); border-radius: 6px;
+    cursor: pointer; outline: none;
+  }
+  .md-btn .md-label { flex: 1; text-align: left; }
+  .md-btn .md-caret { color: var(--bebidas); font-size: 10px; }
+  .md-btn:hover { background: var(--bebidas-bg); }
+  .md-btn:focus-visible { box-shadow: 0 0 0 3px rgba(56,178,172,0.18); }
+  .md-panel {
+    position: absolute; top: calc(100% + 4px); left: 0;
+    min-width: 180px; max-height: 280px; overflow-y: auto;
+    background: #fff; border: 1px solid var(--bebidas-mid); border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    padding: 6px; z-index: 50;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .md-panel[hidden] { display: none; }
+  .md-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: 6px;
+    font-size: 12px; font-weight: 600; color: var(--ink);
+    cursor: pointer; user-select: none;
+  }
+  .md-row:hover { background: var(--bebidas-bg); }
+  .md-row input[type="checkbox"] { accent-color: var(--bebidas); width: 14px; height: 14px; cursor: pointer; }
+  .md-row.is-all {
+    border-bottom: 1px solid var(--border);
+    border-radius: 6px 6px 0 0; margin-bottom: 2px;
+    font-weight: 700; color: var(--bebidas);
   }
 
   /* Resumo de totais dos grupos (topo da aba Vendas) */
@@ -891,7 +924,7 @@
 
     /* Filtros: empilhar */
     .filtros { padding: 12px; gap: 8px; }
-    .filtros .data-grp { flex: 0 0 auto; }
+    .data-grp { flex: 0 0 auto; }
     .search-wrap { width: 100%; min-width: 100%; flex: 1 1 100%; }
     .select-wrap { flex: 1 1 auto; }
     .btn { padding: 7px 10px; font-size: 11px; }
@@ -1077,7 +1110,7 @@
       <div class="data-grp">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <span class="lbl">Data</span>
-        <div class="dt-wrap"><select id="filtro-data-dash" class="filtro-data-el"></select></div>
+        <div class="dt-wrap md-wrap" data-scope="dash"><button type="button" class="md-btn filtro-data-el"><span class="md-label">—</span><span class="md-caret">▾</span></button><div class="md-panel" hidden></div></div>
       </div>
       
       <div style="flex:1"></div>
@@ -1152,7 +1185,7 @@
       <div class="data-grp">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <span class="lbl">Data</span>
-        <div class="dt-wrap"><select id="filtro-data" class="filtro-data-el"></select></div>
+        <div class="dt-wrap md-wrap" data-scope="vendas"><button type="button" class="md-btn filtro-data-el"><span class="md-label">—</span><span class="md-caret">▾</span></button><div class="md-panel" hidden></div></div>
       </div>
       <div class="select-wrap">
         <select id="f-operacao">
@@ -1203,7 +1236,7 @@
       <div class="data-grp">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <span class="lbl">Data</span>
-        <div class="dt-wrap"><select id="filtro-data-prod" class="filtro-data-el"></select></div>
+        <div class="dt-wrap md-wrap" data-scope="prod"><button type="button" class="md-btn filtro-data-el"><span class="md-label">—</span><span class="md-caret">▾</span></button><div class="md-panel" hidden></div></div>
       </div>
     </div>
 
@@ -1262,7 +1295,7 @@
       <div class="data-grp">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <span class="lbl">Data</span>
-        <div class="dt-wrap"><select id="filtro-data-ops" class="filtro-data-el"></select></div>
+        <div class="dt-wrap md-wrap" data-scope="ops"><button type="button" class="md-btn filtro-data-el"><span class="md-label">—</span><span class="md-caret">▾</span></button><div class="md-panel" hidden></div></div>
       </div>
       <div class="search-wrap" style="flex:1;min-width:260px">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
@@ -1284,7 +1317,7 @@
       <div class="data-grp">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <span class="lbl">Data</span>
-        <div class="dt-wrap"><select id="filtro-data-cd" class="filtro-data-el"></select></div>
+        <div class="dt-wrap md-wrap" data-scope="cd"><button type="button" class="md-btn filtro-data-el"><span class="md-label">—</span><span class="md-caret">▾</span></button><div class="md-panel" hidden></div></div>
       </div>
       
       <div class="cd-stat">
@@ -1488,8 +1521,7 @@
     let geral = 0, itens = 0;
     const topProds = [];
     // Fonte única de verdade: OPS_POR_DATA (valores reais do xlsx transacional)
-    const diaRec = dataAtiva === 'todas' ? Object.keys(OPS_POR_DATA)[0] : dataAtiva;
-    const opsRec = OPS_POR_DATA[diaRec] || {};
+    const opsRec = opsAtivas();
     for (const op in opsRec) {
       const grupo = OP_GRUPO[op] || 'BEBIDAS';
       for (const p of opsRec[op]) {
@@ -1572,8 +1604,7 @@
     document.querySelectorAll('.rg-ticket').forEach(e => e.textContent = itens > 0 ? fmtBRL(geral / itens) : 'R$ 0,00');
 
     // Renderiza gráfico de barras usando OPS_POR_DATA (fonte real de vendas por operação)
-    const diaChart = dataAtiva === 'todas' ? Object.keys(OPS_POR_DATA)[0] : dataAtiva;
-    const opsChart = OPS_POR_DATA[diaChart] || {};
+    const opsChart = opsAtivas();
     const barras = Object.entries(opsChart).map(([op, prods]) => {
       const total = prods.reduce((s, p) => s + p.valor, 0);
       const grupo = OP_GRUPO[op] || 'BEBIDAS';
@@ -1704,8 +1735,7 @@
 
 
   function renderAmbulantes() {
-    const dia = dataAtiva === 'todas' ? Object.keys(AMBULANTES_POR_DATA)[0] : dataAtiva;
-    const amb = AMBULANTES_POR_DATA[dia] || [];
+    const amb = ambulantesAtivos();
     const kpisEl = document.getElementById('amb-kpis');
     const tbEl = document.getElementById('amb-topbot');
     if (!kpisEl || !tbEl) return;
@@ -1791,8 +1821,7 @@
     const termo = (document.getElementById('cd-busca').value || '').trim().toLowerCase();
     const filtro = document.getElementById('cd-filtro').value;
 
-    const dia = dataAtiva === 'todas' ? Object.keys(OPS_POR_DATA)[0] : dataAtiva;
-    const opsData = OPS_POR_DATA[dia] || {};
+    const opsData = opsAtivas();
 
     // Agrega por produto
     const agg = {};
@@ -1895,8 +1924,7 @@
   function renderOperacoes() {
     const cont = document.getElementById('operacoes-container');
     if (!cont) return;
-    const dia = dataAtiva === 'todas' ? Object.keys(OPS_POR_DATA)[0] : dataAtiva;
-    const opsData = OPS_POR_DATA[dia] || {};
+    const opsData = opsAtivas();
     const ops = Object.keys(opsData).sort();
     if (ops.length === 0) {
       cont.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-muted);font-style:italic">Sem dados para a data selecionada.</div>';
@@ -2128,7 +2156,15 @@
   // Dados por data (suporta múltiplos dias)
   // Estrutura: { 'YYYY-MM-DD': { id: qtd, ... } }
   let DADOS_POR_DATA = {};
-  let dataAtiva = 'todas';
+  let datasAtivas = new Set();
+  // Compatibilidade: dataAtiva retorna string se 1 data ou 'todas'
+  function dataAtivaCompat() {
+    const all = datasDisponiveis();
+    if (datasAtivas.size === 0 || datasAtivas.size === all.length) return 'todas';
+    if (datasAtivas.size === 1) return [...datasAtivas][0];
+    return 'multi';
+  }
+  Object.defineProperty(window, 'dataAtiva', { get: dataAtivaCompat, configurable: true });
   (function carregarDadosEmbutidos() {
     const meta = document.querySelector('meta[name="dados-por-data"]');
     if (!meta) return;
@@ -2142,12 +2178,54 @@
     const [y, m, d] = iso.split('-');
     return `${d}/${m}/${y}`;
   }
+  function diasAtivos() {
+    const all = datasDisponiveis();
+    return datasAtivas.size === 0 ? all : all.filter(d => datasAtivas.has(d));
+  }
+  // OPS agregado através das datas ativas: { op: [{produto, qtd, valor, categoria}] }
+  function opsAtivas() {
+    const agg = {};
+    for (const d of diasAtivos()) {
+      const por_op = OPS_POR_DATA[d] || {};
+      for (const op in por_op) {
+        if (!agg[op]) agg[op] = {};
+        for (const p of por_op[op]) {
+          const key = p.produto;
+          if (!agg[op][key]) agg[op][key] = { produto: p.produto, qtd: 0, valor: 0, categoria: p.categoria };
+          agg[op][key].qtd += p.qtd;
+          agg[op][key].valor += p.valor;
+        }
+      }
+    }
+    const out = {};
+    for (const op in agg) out[op] = Object.values(agg[op]);
+    return out;
+  }
+  // AMBULANTES agregado por terminal através das datas ativas
+  function ambulantesAtivos() {
+    const byTerm = {};
+    for (const d of diasAtivos()) {
+      const arr = AMBULANTES_POR_DATA[d] || [];
+      for (const a of arr) {
+        if (!byTerm[a.terminal]) byTerm[a.terminal] = { terminal: a.terminal, qtd: 0, valor: 0, produtos: {} };
+        const e = byTerm[a.terminal];
+        e.qtd += a.qtd; e.valor += a.valor;
+        for (const p of a.produtos) {
+          if (!e.produtos[p.produto]) e.produtos[p.produto] = { produto: p.produto, qtd: 0, valor: 0 };
+          e.produtos[p.produto].qtd += p.qtd;
+          e.produtos[p.produto].valor += p.valor;
+        }
+      }
+    }
+    return Object.values(byTerm)
+      .map(t => ({ terminal: t.terminal, qtd: t.qtd, valor: t.valor, produtos: Object.values(t.produtos) }))
+      .sort((a, b) => b.valor - a.valor);
+  }
 
-  // Recalcula "qtds" Map a partir de dataAtiva
+  // Recalcula "qtds" Map a partir de datasAtivas
   function recomputarQtds() {
     qtds.clear();
-    const datas = dataAtiva === 'todas' ? datasDisponiveis() : [dataAtiva];
-    for (const d of datas) {
+    for (const d of diasAtivos()) {
       const dados = DADOS_POR_DATA[d] || {};
       for (const [id, v] of Object.entries(dados)) {
         qtds.set(parseInt(id), (qtds.get(parseInt(id)) || 0) + parseFloat(v));
@@ -2164,8 +2242,7 @@
     });
   }
 
-  function setDataAtiva(d) {
-    dataAtiva = d;
+  function reRender() {
     recomputarQtds();
     popularInputs();
     recalc();
@@ -2175,29 +2252,77 @@
     renderAmbulantes();
   }
 
+  // Rótulo humano para o botão do multi-select
+  function labelDatasAtivas() {
+    const all = datasDisponiveis();
+    const sel = all.filter(d => datasAtivas.has(d));
+    if (sel.length === 0 || sel.length === all.length) return 'Todas as datas';
+    if (sel.length === 1) return formatarData(sel[0]);
+    return `${sel.length} datas`;
+  }
+
+  function atualizarTodosMultiSelects() {
+    document.querySelectorAll('.md-wrap').forEach(w => {
+      const btn = w.querySelector('.md-label');
+      if (btn) btn.textContent = labelDatasAtivas();
+      w.querySelectorAll('.md-row input[data-d]').forEach(cb => {
+        cb.checked = datasAtivas.has(cb.dataset.d);
+      });
+      const master = w.querySelector('.md-all');
+      if (master) {
+        const all = datasDisponiveis();
+        master.checked = all.every(d => datasAtivas.has(d));
+      }
+    });
+  }
+
   function montarFiltroData() {
     const datas = datasDisponiveis();
-    const selects = document.querySelectorAll('.filtro-data-el');
+    const wraps = document.querySelectorAll('.md-wrap');
     if (datas.length === 0) {
-      selects.forEach(s => s.innerHTML = '<option value="todas">Sem dados</option>');
+      wraps.forEach(w => {
+        w.querySelector('.md-label').textContent = 'Sem dados';
+      });
       return;
     }
-    const opts = ['<option value="todas">📅 Todas as datas</option>']
-      .concat(datas.map(d => `<option value="${d}">${formatarData(d)}</option>`))
-      .join('');
-    const defaultData = datas[datas.length - 1];
-    dataAtiva = defaultData;
-    selects.forEach(s => {
-      s.innerHTML = opts;
-      s.value = defaultData;
-      s.addEventListener('change', e => {
-        setDataAtiva(e.target.value);
-        // Sincroniza os outros selects
-        document.querySelectorAll('.filtro-data-el').forEach(other => {
-          if (other !== e.target) other.value = e.target.value;
+    // Por padrão, todas as datas selecionadas
+    datasAtivas = new Set(datas);
+    wraps.forEach(w => {
+      const panel = w.querySelector('.md-panel');
+      panel.innerHTML = `
+        <label class="md-row is-all"><input type="checkbox" class="md-all" checked> Todas as datas</label>
+        ${datas.map(d => `<label class="md-row"><input type="checkbox" data-d="${d}" checked> ${formatarData(d)}</label>`).join('')}
+      `;
+      const btn = w.querySelector('.md-btn');
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        // Fecha outros
+        document.querySelectorAll('.md-panel').forEach(p => { if (p !== panel) p.hidden = true; });
+        panel.hidden = !panel.hidden;
+      });
+      panel.addEventListener('click', e => e.stopPropagation());
+      panel.querySelectorAll('input[data-d]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          if (cb.checked) datasAtivas.add(cb.dataset.d);
+          else datasAtivas.delete(cb.dataset.d);
+          if (datasAtivas.size === 0) { datasAtivas.add(cb.dataset.d); cb.checked = true; }
+          atualizarTodosMultiSelects();
+          reRender();
         });
       });
+      const master = panel.querySelector('.md-all');
+      master.addEventListener('change', () => {
+        if (master.checked) datasAtivas = new Set(datas);
+        else { datasAtivas = new Set([datas[datas.length - 1]]); }
+        atualizarTodosMultiSelects();
+        reRender();
+      });
     });
+    // Fecha panels ao clicar fora
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.md-panel').forEach(p => p.hidden = true);
+    });
+    atualizarTodosMultiSelects();
   }
 
   function init() {
