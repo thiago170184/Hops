@@ -190,10 +190,12 @@ def processar(xlsx_files: list[Path]):
                 produto = normalizar_produto(r.get("Q"))
                 try: qtd = float(r.get("N") or 0)
                 except: qtd = 0
-                # col O = ValorProduto (preço unitário do cardápio)
-                # col D = ValorPedido (total da linha = qtd × ValorProduto) — usar este
-                try: valor = float(r.get("D") or 0)
-                except: valor = 0
+                # col O = ValorProduto = preço unitário do cardápio.
+                # col D = ValorPedido (total da linha) existe na aba BAR mas vem
+                # como #VALUE! na aba AMBULANTE. Calculamos qtd × unit pra ser
+                # consistente entre ambas.
+                try: unit = float(r.get("O") or 0)
+                except: unit = 0
                 terminal = (r.get("U") or "").strip()
 
                 if qtd <= 0 or not produto:
@@ -201,6 +203,8 @@ def processar(xlsx_files: list[Path]):
                 if not categoria_eh_bebida(cat):
                     total_nao_bebida += 1
                     continue
+
+                valor = round(qtd * unit, 2)  # total real da linha
 
                 if aba == "BAR":
                     operacao = MAPA_PDV_OPERACAO.get(pdv, pdv)
