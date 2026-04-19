@@ -342,32 +342,32 @@ def processar(xlsx_files: list[Path]):
 # =============================================================================
 # Injeção no HTML
 # =============================================================================
+def _sub_const(html, nome, valor):
+    """Substitui APENAS a primeira ocorrência de `const NOME = ...;\\n`.
+    Usa re.sub com count=1 — não confunde com outras consts grandes."""
+    pattern = r"const " + re.escape(nome) + r" = \{.*?\};\n"
+    # re.sub com lambda evita interpretar \1, \g etc no replacement
+    novo = f"const {nome} = {valor};\n"
+    return re.sub(pattern, lambda m: novo, html, count=1, flags=re.DOTALL)
+
+
 def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out):
     html = HTML_PATH.read_text(encoding="utf-8")
 
-    # DATA
-    m = re.search(r"const DATA = (\[.+?\]);", html, re.DOTALL)
-    html = html.replace(m.group(0), f"const DATA = {json.dumps(data_list, ensure_ascii=False)};")
+    # DATA (lista, começa com [)
+    novo = f"const DATA = {json.dumps(data_list, ensure_ascii=False)};"
+    html = re.sub(r"const DATA = \[.*?\];", lambda m: novo, html, count=1, flags=re.DOTALL)
 
-    # DADOS_POR_DATA
+    # DADOS_POR_DATA (meta tag)
     html = re.sub(
         r"<meta name=\"dados-por-data\" content='[^']+'",
-        f"<meta name=\"dados-por-data\" content='{json.dumps(dpd)}'",
-        html,
+        lambda m: f"<meta name=\"dados-por-data\" content='{json.dumps(dpd)}'",
+        html, count=1,
     )
 
-    # OPS_POR_DATA
-    m = re.search(r"const OPS_POR_DATA = ({.+?});\n", html, re.DOTALL)
-    html = html.replace(m.group(0), f"const OPS_POR_DATA = {json.dumps(ops_out, ensure_ascii=False)};\n")
-
-    # AMBULANTES_POR_DATA
-    m = re.search(r"const AMBULANTES_POR_DATA = ({.+?});\n", html, re.DOTALL)
-    html = html.replace(m.group(0), f"const AMBULANTES_POR_DATA = {json.dumps(amb_out, ensure_ascii=False)};\n")
-
-    # PEDIDOS_POR_DATA
-    m = re.search(r"const PEDIDOS_POR_DATA = ({.+?});\n", html, re.DOTALL)
-    if m:
-        html = html.replace(m.group(0), f"const PEDIDOS_POR_DATA = {json.dumps(pedidos_out)};\n")
+    html = _sub_const(html, "OPS_POR_DATA", json.dumps(ops_out, ensure_ascii=False))
+    html = _sub_const(html, "AMBULANTES_POR_DATA", json.dumps(amb_out, ensure_ascii=False))
+    html = _sub_const(html, "PEDIDOS_POR_DATA", json.dumps(pedidos_out))
 
     HTML_PATH.write_text(html, encoding="utf-8")
 
