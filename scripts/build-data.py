@@ -74,10 +74,10 @@ CATEGORIAS_BEBIDAS = {
     "WHISKERIA - BATIDAS E CAIPIRINHAS", "WHISKERIA - DRINKS COPAO",
     "WHISKERIA - BEBIDAS LATA",
     "COMIDA TROPEIRA - BEBIDAS",
-    "BUFFET PRIME",  # opcional — no momento classificamos como bebidas do camarote
 }
-# Itens em BUFFET PRIME são alimentação, mas no modelo atual mantemos como despesa
-# dos camarotes. Trocar se futuramente quiser separar.
+# BUFFET PRIME é comida (camarote) — excluído do relatório. Mantemos o PDV
+# mapeado em MAPA_PDV_OPERACAO apenas para que a operação apareça quando
+# houver bebidas vendidas ali no futuro.
 
 
 # =============================================================================
