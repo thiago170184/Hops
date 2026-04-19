@@ -476,6 +476,72 @@
     background: var(--card); border: 1px dashed var(--border); border-radius: 12px;
   }
 
+
+  /* Aba Cardápio — tabela de conferência de produtos × operações */
+  .cardapio-wrap {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; overflow-x: auto;
+  }
+  table.tbl-cardapio { width: 100%; min-width: 900px; border-collapse: collapse; table-layout: fixed; }
+  table.tbl-cardapio th {
+    padding: 10px 14px; text-align: left;
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-muted);
+    border-bottom: 1px solid var(--border); background: #fafbfc;
+    white-space: nowrap;
+    position: sticky; top: 0; z-index: 2;
+  }
+  table.tbl-cardapio td {
+    padding: 10px 14px; font-size: 12px;
+    border-bottom: 1px solid var(--divider);
+    vertical-align: middle;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  table.tbl-cardapio tbody tr:nth-child(even) td { background: #fafbfc; }
+  table.tbl-cardapio tbody tr:hover td { background: var(--soft); }
+  table.tbl-cardapio tbody tr.alerta td { background: #fff7ed !important; }
+  table.tbl-cardapio tbody tr.alerta:hover td { background: #ffedd5 !important; }
+  .cd-prod { font-weight: 700; color: var(--ink); }
+  .cd-cat  { font-size: 10.5px; color: var(--ink-muted); font-weight: 500; }
+  .cd-preco { font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .cd-ops {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    max-width: 100%;
+  }
+  .cd-op-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 999px;
+    background: var(--bebidas-bg); color: var(--bebidas);
+    border: 1px solid var(--bebidas-mid);
+    font-size: 10.5px; font-weight: 700; white-space: nowrap;
+  }
+  .cd-op-chip.amb { background: var(--ambulantes-bg); color: var(--ambulantes); border-color: var(--ambulantes-mid); }
+  .cd-op-chip .p-diff {
+    font-weight: 800; color: #c2410c;
+    margin-left: 4px;
+  }
+  .badge-status {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .badge-ok { background: #dff5e9; color: #006c48; border: 1px solid #b3e4c8; }
+  .badge-alerta { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+
+  /* Header da aba Cardápio */
+  .cardapio-header {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 18px; margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .cd-stat { display: flex; flex-direction: column; gap: 1px; }
+  .cd-stat .l { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-muted); }
+  .cd-stat .v { font-size: 20px; font-weight: 900; color: var(--ink); }
+  .cd-stat .v.warn { color: #c2410c; }
+
   /* Aba Operações */
   .op-card {
     background: var(--card); border: 1px solid var(--border);
@@ -688,9 +754,19 @@
     .meta-value { font-size: 12.5px; }
     .meta-label { font-size: 9px; }
 
-    /* Tabs com scroll horizontal */
-    .tabs { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding: 3px; }
-    .tab { padding: 8px 14px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+    /* Tabs com scroll horizontal — 5 abas cabem via scroll */
+    .tabs {
+      width: 100%; overflow-x: auto; flex-wrap: nowrap;
+      padding: 3px; max-width: 100%;
+      scrollbar-width: thin;
+    }
+    .tabs::-webkit-scrollbar { height: 3px; }
+    .tabs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .tab {
+      padding: 8px 12px; font-size: 11.5px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .tab svg { width: 12px; height: 12px; }
 
     /* KPIs: 4 → 2×2 */
     .kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -809,6 +885,16 @@
     table.tbl-produtos td.cell-op,
     table.tbl-produtos td.cell-cat { font-size: 11.5px; }
 
+
+    .cardapio-header { flex-direction: column; align-items: stretch; gap: 10px; }
+    .cardapio-header .cd-stat { flex-direction: row; align-items: baseline; gap: 10px; }
+    .cardapio-header .cd-stat .v { font-size: 16px; }
+    .cardapio-header .search-wrap { min-width: 100% !important; }
+    .cardapio-header .select-wrap { width: 100%; }
+    .cardapio-header .select-wrap select { width: 100%; }
+    table.tbl-cardapio th, table.tbl-cardapio td { padding: 8px 10px; font-size: 11px; }
+    .cd-op-chip { font-size: 10px; padding: 2px 6px; }
+
     /* Top 10 produtos */
     .top-item { grid-template-columns: 28px 1fr auto; gap: 8px; padding: 8px 10px; font-size: 11.5px; }
     .top-item .nm small { font-size: 10px; }
@@ -877,6 +963,10 @@
     <button class="tab" data-tab="operacoes" onclick="setTab('operacoes')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
       Operações
+    </button>
+    <button class="tab" data-tab="cardapio" onclick="setTab('cardapio')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg>
+      Cardápio
     </button>
   </div>
 
@@ -1068,6 +1158,47 @@
 
     <div id="operacoes-container">
       <!-- populado via JS -->
+    </div>
+  </div>
+
+
+  <!-- CARDÁPIO -->
+  <div class="tab-panel" id="tab-cardapio">
+    <div class="cardapio-header">
+      <div class="cd-stat">
+        <span class="l">Produtos únicos</span>
+        <span class="v" id="cd-total">0</span>
+      </div>
+      <div class="cd-stat">
+        <span class="l">Com preços divergentes</span>
+        <span class="v warn" id="cd-inconsistentes">0</span>
+      </div>
+      <div style="flex:1"></div>
+      <div class="select-wrap">
+        <select id="cd-filtro">
+          <option value="todos">Todos os produtos</option>
+          <option value="alerta">Só divergentes</option>
+        </select>
+      </div>
+      <div class="search-wrap" style="min-width:220px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input id="cd-busca" type="text" placeholder="Buscar produto…" />
+      </div>
+    </div>
+
+    <div class="cardapio-wrap">
+      <table class="tbl-cardapio">
+        <thead>
+          <tr>
+            <th style="width:22%">Produto</th>
+            <th style="width:38%">Operações onde é vendido · Preço Unit.</th>
+            <th style="width:15%" class="num">Preço Mín / Máx</th>
+            <th style="width:13%" class="num">Total vendido</th>
+            <th style="width:12%">Status</th>
+          </tr>
+        </thead>
+        <tbody id="cd-tbody"></tbody>
+      </table>
     </div>
   </div>
 
@@ -1447,6 +1578,92 @@
   const elBp = document.getElementById('busca-prod');
   if (elBp) elBp.addEventListener('input', renderProdutos);
   
+
+  function renderCardapio() {
+    const tbody = document.getElementById('cd-tbody');
+    if (!tbody) return;
+    const termo = (document.getElementById('cd-busca').value || '').trim().toLowerCase();
+    const filtro = document.getElementById('cd-filtro').value;
+
+    const dia = dataAtiva === 'todas' ? Object.keys(OPS_POR_DATA)[0] : dataAtiva;
+    const opsData = OPS_POR_DATA[dia] || {};
+
+    // Agrega por produto
+    const agg = {};
+    for (const op in opsData) {
+      for (const p of opsData[op]) {
+        if (!agg[p.produto]) agg[p.produto] = { categoria: p.categoria, ops: {}, qtd: 0, valor: 0 };
+        const precoUnit = p.qtd > 0 ? Math.round((p.valor / p.qtd) * 100) / 100 : 0;
+        agg[p.produto].ops[op] = { preco: precoUnit, qtd: p.qtd, valor: p.valor };
+        agg[p.produto].qtd += p.qtd;
+        agg[p.produto].valor += p.valor;
+      }
+    }
+
+    const produtos = Object.entries(agg).map(([nome, info]) => {
+      const precos = Object.values(info.ops).map(o => o.preco);
+      const precosUnicos = [...new Set(precos)];
+      const min = Math.min(...precos), max = Math.max(...precos);
+      return {
+        nome, ...info,
+        precosUnicos, min, max,
+        inconsistente: precosUnicos.length > 1,
+      };
+    }).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+    const total = produtos.length;
+    const inconsistentes = produtos.filter(p => p.inconsistente).length;
+    document.getElementById('cd-total').textContent = total;
+    document.getElementById('cd-inconsistentes').textContent = inconsistentes;
+
+    // Filtra
+    const filtrados = produtos.filter(p => {
+      if (filtro === 'alerta' && !p.inconsistente) return false;
+      if (termo && !(p.nome.toLowerCase().includes(termo) || p.categoria.toLowerCase().includes(termo))) return false;
+      return true;
+    });
+
+    if (filtrados.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ink-muted);font-style:italic">Nenhum produto encontrado.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtrados.map(p => {
+      const chips = Object.entries(p.ops).sort((a,b) => a[0].localeCompare(b[0])).map(([op, info]) => {
+        const isAmb = (OP_GRUPO[op] || 'BEBIDAS') === 'BEBIDAS AMBULANTES';
+        const diffTag = p.inconsistente && info.preco !== p.max ? `<span class="p-diff">-${fmtBRL(p.max - info.preco)}</span>` : '';
+        return `<span class="cd-op-chip ${isAmb ? 'amb' : ''}">${escapeHtml(op)} · ${fmtBRL(info.preco)}${diffTag}</span>`;
+      }).join('');
+      const precoRange = p.inconsistente
+        ? `${fmtBRL(p.min)} <span style="color:var(--ink-muted)">–</span> ${fmtBRL(p.max)}`
+        : fmtBRL(p.min);
+      return `
+        <tr class="${p.inconsistente ? 'alerta' : ''}">
+          <td>
+            <div class="cd-prod" title="${escapeHtml(p.nome)}">${escapeHtml(p.nome)}</div>
+            <div class="cd-cat">${escapeHtml(p.categoria)}</div>
+          </td>
+          <td>
+            <div class="cd-ops">${chips}</div>
+          </td>
+          <td class="num cd-preco">${precoRange}</td>
+          <td class="num cd-preco">${fmtBRL(p.valor)}</td>
+          <td>
+            ${p.inconsistente
+              ? '<span class="badge-status badge-alerta">⚠ Divergente</span>'
+              : '<span class="badge-status badge-ok">✓ OK</span>'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  const elCdBusca = document.getElementById('cd-busca');
+  if (elCdBusca) elCdBusca.addEventListener('input', renderCardapio);
+  const elCdFiltro = document.getElementById('cd-filtro');
+  if (elCdFiltro) elCdFiltro.addEventListener('change', renderCardapio);
+
+
   // Ao trocar de aba, limpa buscas e re-renderiza produtos/operações
   const _setTab = setTab;
   setTab = function(name) {
@@ -1461,6 +1678,7 @@
     _setTab(name);
     if (name === 'produtos') renderProdutos();
     if (name === 'operacoes') renderOperacoes();
+    if (name === 'cardapio') renderCardapio();
   };
 
   function fmtBRLSimples(n) { return fmtBRL(n); }
@@ -1747,6 +1965,7 @@
     recalc();
     renderProdutos();
     renderOperacoes();
+    renderCardapio();
   }
 
   function montarFiltroData() {
