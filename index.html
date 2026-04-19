@@ -986,7 +986,8 @@
     });
   }
 
-  document.getElementById('f-operacao').addEventListener('change', aplicarFiltros);
+  const elFop = document.getElementById('f-operacao');
+  if (elFop) elFop.addEventListener('change', aplicarFiltros);
 
   function recalc() {
     const porGrupo = {}, porOp = {};
@@ -1202,9 +1203,9 @@
     });
   });
 
-  document.getElementById('busca-prod').addEventListener('input', renderProdutos);
-  document.getElementById('fp-grupo').addEventListener('change', renderProdutos);
-
+  const elBp = document.getElementById('busca-prod');
+  if (elBp) elBp.addEventListener('input', renderProdutos);
+  
   // Ao trocar de aba, limpa buscas e re-renderiza produtos/operações
   const _setTab = setTab;
   setTab = function(name) {
