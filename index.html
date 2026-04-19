@@ -1232,13 +1232,19 @@
   function recalc() {
     const porGrupo = {}, porOp = {};
     let geral = 0, itens = 0;
-    for (const p of DATA) {
-      const qtd = qtds.get(p.id) || 0;
-      const total = qtd * p.preco;
-      porGrupo[p.grupo] = (porGrupo[p.grupo] || 0) + total;
-      porOp[p.operacao] = (porOp[p.operacao] || 0) + total;
-      geral += total;
-      itens += qtd;
+    const topProds = [];
+    // Fonte única de verdade: OPS_POR_DATA (valores reais do xlsx transacional)
+    const diaRec = dataAtiva === 'todas' ? Object.keys(OPS_POR_DATA)[0] : dataAtiva;
+    const opsRec = OPS_POR_DATA[diaRec] || {};
+    for (const op in opsRec) {
+      const grupo = OP_GRUPO[op] || 'BEBIDAS';
+      for (const p of opsRec[op]) {
+        porOp[op] = (porOp[op] || 0) + p.valor;
+        porGrupo[grupo] = (porGrupo[grupo] || 0) + p.valor;
+        geral += p.valor;
+        itens += p.qtd;
+        topProds.push({ nome: p.produto, op: op, total: p.valor, qtd: p.qtd });
+      }
     }
 
     // Atualiza totais das linhas visíveis + qtds nos spans
