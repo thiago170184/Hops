@@ -136,7 +136,17 @@
   .bar-row .name { width: 130px; font-weight: 700; color: var(--ink); flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bar-track { flex: 1; height: 10px; background: #f3f4f6; border-radius: 999px; overflow: hidden; }
   .bar-fill { height: 100%; border-radius: 999px; transition: width 400ms ease; }
-  .bar-val { width: 110px; text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
+  
+  .bar-val .bar-pct {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+    margin-top: 1px;
+  }
+
+  .bar-val { width: 120px; text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
   .top-empty { font-size: 12px; color: var(--ink-subtle); padding: 18px 0; text-align: center; font-style: italic; }
   /* Top produtos */
   .top-list { display: flex; flex-direction: column; gap: 8px; }
@@ -714,7 +724,17 @@
     .dash-card { padding: 14px 16px; }
     .bar-chart .bar-row { font-size: 11.5px; gap: 8px; }
     .bar-row .name { width: 90px; font-size: 11px; }
-    .bar-val { width: 80px; font-size: 11px; }
+    
+  .bar-val .bar-pct {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+    margin-top: 1px;
+  }
+
+  .bar-val { width: 80px; font-size: 11px; }
 
     /* Grupo (card grande Bebidas/Ambulantes) */
     .grupo-header { padding: 14px 16px; gap: 12px; }
