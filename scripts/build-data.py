@@ -23,7 +23,7 @@ Futuramente pode ser estendido pra baixar direto do Google Drive via API.
 
 import zipfile, re, json, sys, os
 import xml.etree.ElementTree as ET
-from collections import defaultdict
+from collections import defaultdict, Counter
 from pathlib import Path
 
 # =============================================================================
@@ -183,7 +183,7 @@ def processar(xlsx_files: list[Path]):
     ids_vistos: set[str] = set()
 
     # Estruturas finais
-    ops_por_data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "valor": 0, "categoria": ""})))
+    ops_por_data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "valor": 0, "categoria": "", "unit_hist": []})))
     amb_por_data = defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "valor": 0, "produtos": defaultdict(lambda: {"qtd": 0, "valor": 0})}))
     all_produtos = {}  # (nome_canonico, grupo) → preço (do cardápio, calculado pela média)
     pedidos_por_data = defaultdict(set)  # YYYY-MM-DD → set de PedidoId únicos
@@ -245,6 +245,8 @@ def processar(xlsx_files: list[Path]):
                 bucket["qtd"] += qtd
                 bucket["valor"] += valor
                 bucket["categoria"] = cat
+                # Histórico de preços unitários (para calcular preço "cheio" do cardápio)
+                bucket["unit_hist"].append((qtd, round(unit, 2)))
 
                 if pedido_id:
                     pedidos_por_data[data_iso].add(pedido_id)
@@ -273,6 +275,13 @@ def processar(xlsx_files: list[Path]):
     print(f"   Datas:               {sorted(ops_por_data.keys())}")
 
     # Normaliza estruturas pra JSON
+    def calcular_preco_cheio(hist):
+        """Preço unitário 'oficial': moda dos units quando qtd=1. Fallback: max."""
+        units_qtd1 = [u for q, u in hist if q == 1]
+        if units_qtd1:
+            return Counter(units_qtd1).most_common(1)[0][0]
+        return max(u for _, u in hist)
+
     ops_out = {}
     for data_iso, por_op in ops_por_data.items():
         ops_out[data_iso] = {}
@@ -285,6 +294,7 @@ def processar(xlsx_files: list[Path]):
                     "categoria": d["categoria"],
                     "qtd": int(q) if q == int(q) else q,
                     "valor": round(d["valor"], 2),
+                    "preco": calcular_preco_cheio(d["unit_hist"]),
                 })
             ops_out[data_iso][op] = arr
 
