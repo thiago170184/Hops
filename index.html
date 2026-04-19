@@ -728,9 +728,9 @@
     font-size: 10.5px; font-weight: 700; white-space: nowrap;
     line-height: 1.1;
   }
-  .cd-op-chip .op { font-weight: 700; }
-  .cd-op-chip .px { font-weight: 800; }
-  .cd-op-chip .qt { font-size: 9.5px; color: var(--ink-muted); font-weight: 600; }
+  .cd-op-chip .chip-op { font-weight: 700; }
+  .cd-op-chip .chip-px { font-weight: 800; }
+  .cd-op-chip .chip-qt { font-size: 9.5px; color: var(--ink-muted); font-weight: 600; }
   .cd-op-chip.amb { background: var(--ambulantes-bg); color: var(--ambulantes); border-color: var(--ambulantes-mid); }
   .cd-op-chip.amb .qt { color: rgba(71,90,136,0.7); }
   .cd-op-chip.divergente { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
@@ -1659,9 +1659,10 @@
       });
       cat.querySelector('.cat-total').textContent = fmtBRL(tot);
     });
-    document.querySelectorAll('.op').forEach(op => {
+    document.querySelectorAll('.op[data-op]').forEach(op => {
       const opNome = op.dataset.op;
-      op.querySelector('.op-total').textContent = fmtBRL(porOp[opNome] || 0);
+      const el = op.querySelector('.op-total');
+      if (el) el.textContent = fmtBRL(porOp[opNome] || 0);
     });
     document.querySelectorAll('.grupo').forEach(gr => {
       const gNome = gr.dataset.grupo;
@@ -2036,9 +2037,9 @@
           const divergente = info.preco !== modaPreco;
           const cls = divergente ? 'divergente' : (isAmb ? 'amb' : '');
           return `<span class="cd-op-chip ${cls}" title="${escapeHtml(op)} · ${info.qtd} un · ${fmtBRL(info.valor)}">
-            <span class="op">${escapeHtml(op)}</span>
-            <span class="px">${fmtBRL(info.preco)}</span>
-            <span class="qt">${info.qtd}un</span>
+            <span class="chip-op">${escapeHtml(op)}</span>
+            <span class="chip-px">${fmtBRL(info.preco)}</span>
+            <span class="chip-qt">${info.qtd}un</span>
           </span>`;
         }).join('');
 
@@ -2084,21 +2085,16 @@
   const _setTab = setTab;
   setTab = function(name) {
     _setTab(name);
-    try {
-      const buscaProd = document.getElementById('busca-prod');
-      if (buscaProd && name !== 'produtos') buscaProd.value = '';
-      const buscaOps = document.getElementById('busca-ops');
-      if (buscaOps && name !== 'operacoes') {
-        buscaOps.value = '';
-        if (typeof aplicarBuscaOps === 'function') aplicarBuscaOps();
-      }
-      if (name === 'produtos') renderProdutos();
-      if (name === 'operacoes') renderOperacoes();
-      if (name === 'cardapio') renderCardapio();
-    } catch (err) {
-      console.error('Erro ao abrir aba "' + name + '":', err);
-      alert('Erro na aba "' + name + '":\n\n' + (err.message || err) + '\n\nStack:\n' + (err.stack || '').split('\n').slice(0, 5).join('\n'));
+    const buscaProd = document.getElementById('busca-prod');
+    if (buscaProd && name !== 'produtos') buscaProd.value = '';
+    const buscaOps = document.getElementById('busca-ops');
+    if (buscaOps && name !== 'operacoes') {
+      buscaOps.value = '';
+      if (typeof aplicarBuscaOps === 'function') aplicarBuscaOps();
     }
+    if (name === 'produtos') renderProdutos();
+    if (name === 'operacoes') renderOperacoes();
+    if (name === 'cardapio') renderCardapio();
   };
 
   function fmtBRLSimples(n) { return fmtBRL(n); }
