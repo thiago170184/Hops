@@ -1070,9 +1070,6 @@
     document.querySelectorAll('.rg-bebidas-pct').forEach(e => e.textContent = pctBebX.toFixed(1).replace('.', ',') + '%');
     document.querySelectorAll('.rg-ambulantes-pct').forEach(e => e.textContent = pctAmbX.toFixed(1).replace('.', ',') + '%');
     document.querySelectorAll('.rg-ticket').forEach(e => e.textContent = itens > 0 ? fmtBRL(geral / itens) : 'R$ 0,00');
-    document.querySelectorAll('.rg-bebidas-pct').forEach(e => e.textContent = pctBeb.toFixed(1).replace('.', ',') + '%');
-    document.querySelectorAll('.rg-alim-pct').forEach(e => e.textContent = pctAli.toFixed(1).replace('.', ',') + '%');
-    document.querySelectorAll('.rg-outros-pct').forEach(e => e.textContent = pctOut.toFixed(1).replace('.', ',') + '%');
 
     // Separa operações por grupo macro (Bebidas / Alimentação) e renderiza 2 charts
     function renderBar(chartId, grupoAlvo, cor) {
