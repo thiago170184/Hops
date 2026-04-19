@@ -2157,14 +2157,6 @@
   // Estrutura: { 'YYYY-MM-DD': { id: qtd, ... } }
   let DADOS_POR_DATA = {};
   let datasAtivas = new Set();
-  // Compatibilidade: dataAtiva retorna string se 1 data ou 'todas'
-  function dataAtivaCompat() {
-    const all = datasDisponiveis();
-    if (datasAtivas.size === 0 || datasAtivas.size === all.length) return 'todas';
-    if (datasAtivas.size === 1) return [...datasAtivas][0];
-    return 'multi';
-  }
-  Object.defineProperty(window, 'dataAtiva', { get: dataAtivaCompat, configurable: true });
   (function carregarDadosEmbutidos() {
     const meta = document.querySelector('meta[name="dados-por-data"]');
     if (!meta) return;
@@ -2330,7 +2322,7 @@
       renderVendas();
       renderProdutos();
       montarFiltroData();
-      setDataAtiva(dataAtiva);
+      reRender();
       const inp = document.getElementById('busca-ops');
       if (inp) inp.addEventListener('input', aplicarBuscaOps);
     } catch (err) {
