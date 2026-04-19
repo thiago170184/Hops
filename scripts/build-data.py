@@ -153,6 +153,7 @@ def read_sheet(xlsx_path: Path, sheet_name: str):
 
 
 # Colunas esperadas (por nome, tolerante à posição na planilha)
+COL_PEDIDO_ID     = "PedidoId"
 COL_PEDIDO_DET_ID = "PedidoDetalheId"
 COL_DATA_BRASILIA = "DataCriacaoBrasilia"
 COL_PDV_APELIDO   = "PDV APELIDO"
@@ -185,6 +186,7 @@ def processar(xlsx_files: list[Path]):
     ops_por_data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "valor": 0, "categoria": ""})))
     amb_por_data = defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "valor": 0, "produtos": defaultdict(lambda: {"qtd": 0, "valor": 0})}))
     all_produtos = {}  # (nome_canonico, grupo) → preço (do cardápio, calculado pela média)
+    pedidos_por_data = defaultdict(set)  # YYYY-MM-DD → set de PedidoId únicos
 
     total_linhas = 0
     total_dup = 0
@@ -211,6 +213,7 @@ def processar(xlsx_files: list[Path]):
                 if not data_iso or "2026" not in data_iso:
                     continue
 
+                pedido_id = (r.get(COL_PEDIDO_ID) or "").strip()
                 pdv = (r.get(COL_PDV_APELIDO) or "").strip()
                 cat = (r.get(COL_CATEGORIA) or "").strip()
                 produto = normalizar_produto(r.get(COL_PRODUTO))
@@ -242,6 +245,9 @@ def processar(xlsx_files: list[Path]):
                 bucket["qtd"] += qtd
                 bucket["valor"] += valor
                 bucket["categoria"] = cat
+
+                if pedido_id:
+                    pedidos_por_data[data_iso].add(pedido_id)
 
                 # Cardápio
                 key = (produto, grupo)
@@ -329,13 +335,14 @@ def processar(xlsx_files: list[Path]):
                 q = d["qtd"]
                 dpd[data_iso][str(pid)] = dpd[data_iso].get(str(pid), 0) + (int(q) if q == int(q) else q)
 
-    return data_list, dict(dpd), ops_out, amb_out
+    pedidos_out = {d: len(ids) for d, ids in pedidos_por_data.items()}
+    return data_list, dict(dpd), ops_out, amb_out, pedidos_out
 
 
 # =============================================================================
 # Injeção no HTML
 # =============================================================================
-def injetar_no_html(data_list, dpd, ops_out, amb_out):
+def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out):
     html = HTML_PATH.read_text(encoding="utf-8")
 
     # DATA
@@ -357,6 +364,11 @@ def injetar_no_html(data_list, dpd, ops_out, amb_out):
     m = re.search(r"const AMBULANTES_POR_DATA = ({.+?});\n", html, re.DOTALL)
     html = html.replace(m.group(0), f"const AMBULANTES_POR_DATA = {json.dumps(amb_out, ensure_ascii=False)};\n")
 
+    # PEDIDOS_POR_DATA
+    m = re.search(r"const PEDIDOS_POR_DATA = ({.+?});\n", html, re.DOTALL)
+    if m:
+        html = html.replace(m.group(0), f"const PEDIDOS_POR_DATA = {json.dumps(pedidos_out)};\n")
+
     HTML_PATH.write_text(html, encoding="utf-8")
 
 
@@ -375,8 +387,9 @@ def main():
         print("❌ Nenhum xlsx encontrado em", PLANILHAS_DIR)
         sys.exit(1)
 
-    data_list, dpd, ops_out, amb_out = processar(xlsx_files)
-    injetar_no_html(data_list, dpd, ops_out, amb_out)
+    data_list, dpd, ops_out, amb_out, pedidos_out = processar(xlsx_files)
+    injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out)
+    print(f"   Pedidos únicos:      {sum(pedidos_out.values())} ({pedidos_out})")
     print(f"\n✅ HTML atualizado com {len(data_list)} produtos, {sum(len(v) for v in ops_out.values())} linhas OPS")
 
 
