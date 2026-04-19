@@ -1478,9 +1478,13 @@
   const qtds = new Map();  // id → qtd
 
   function fmtBRL(n) {
-    return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const v = (typeof n === 'number' && isFinite(n)) ? n : 0;
+    return 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   }
-  function fmtInt(n) { return n.toLocaleString('pt-BR'); }
+  function fmtInt(n) {
+    const v = (typeof n === 'number' && isFinite(n)) ? n : 0;
+    return v.toLocaleString('pt-BR');
+  }
 
   function setTab(name) {
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
