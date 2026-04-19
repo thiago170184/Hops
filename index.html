@@ -136,36 +136,61 @@
   .bar-row .name { width: 140px; font-weight: 700; color: var(--ink); flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* Gráfico de barras vertical (Vendas por dia) */
+  .vbar-wrap { display: flex; flex-direction: column; height: 100%; }
   .vbar-chart {
-    display: flex; align-items: flex-end; justify-content: space-around;
-    gap: 16px; min-height: 240px; padding: 24px 4px 0;
+    position: relative;
+    display: flex; align-items: stretch; justify-content: space-around;
+    gap: 24px; flex: 1; min-height: 340px;
+    padding: 28px 16px 0 52px;
+  }
+  /* Eixo Y com linhas de grade */
+  .vbar-yaxis {
+    position: absolute; left: 0; top: 28px; bottom: 30px; width: 100%;
+    pointer-events: none;
+  }
+  .vbar-yline {
+    position: absolute; left: 0; right: 0; height: 1px;
+    background: var(--divider);
+  }
+  .vbar-ylabel {
+    position: absolute; left: 0; width: 44px;
+    font-size: 10px; font-weight: 600; color: var(--ink-subtle);
+    text-align: right; transform: translateY(-50%);
+    font-variant-numeric: tabular-nums;
   }
   .vbar-group {
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-    flex: 1; min-width: 0;
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: stretch;
+    flex: 1; min-width: 0; max-width: 280px; margin: 0 auto;
   }
   .vbar-group .bars {
-    display: flex; align-items: flex-end; justify-content: center; gap: 8px; height: 200px;
+    display: flex; align-items: flex-end; justify-content: center; gap: 14px;
+    flex: 1; padding-bottom: 0;
+    border-bottom: 2px solid var(--border);
   }
   .vbar-bar {
-    width: 38px; border-radius: 6px 6px 0 0;
+    width: 64px; border-radius: 6px 6px 0 0;
     position: relative; min-height: 2px;
-    transition: height 400ms ease;
+    transition: height 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 -2px 4px rgba(6,11,57,0.04) inset;
   }
   .vbar-bar .val {
-    position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
-    font-size: 10.5px; font-weight: 700; color: var(--ink); white-space: nowrap;
+    position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+    font-size: 11.5px; font-weight: 700; color: var(--ink); white-space: nowrap;
     font-variant-numeric: tabular-nums;
   }
   .vbar-group .xlabel {
-    font-size: 11.5px; font-weight: 800; color: var(--ink); letter-spacing: 0.03em;
+    margin-top: 10px;
+    font-size: 12.5px; font-weight: 800; color: var(--ink); letter-spacing: 0.04em;
+    text-align: center;
   }
   .vbar-legend {
-    display: flex; justify-content: center; gap: 18px; margin-top: 14px;
-    font-size: 11px; font-weight: 600; color: var(--ink-muted);
+    display: flex; justify-content: center; gap: 22px; padding: 12px 0 4px;
+    font-size: 11.5px; font-weight: 600; color: var(--ink-muted);
+    border-top: 1px solid var(--divider); margin-top: 14px;
   }
-  .vbar-legend .item { display: flex; align-items: center; gap: 6px; }
-  .vbar-legend .dot { width: 10px; height: 10px; border-radius: 2px; }
+  .vbar-legend .item { display: flex; align-items: center; gap: 8px; }
+  .vbar-legend .dot { width: 12px; height: 12px; border-radius: 3px; }
   .bar-track { flex: 1; height: 10px; background: #f3f4f6; border-radius: 999px; overflow: hidden; }
   .bar-fill { height: 100%; border-radius: 999px; transition: width 400ms ease; }
   
@@ -1191,12 +1216,14 @@
       </div>
       <div class="dash-card">
         <h3>Vendas por dia <small>bares vs ambulantes</small></h3>
-        <div class="vbar-chart" id="chart-dias">
-          <div class="top-empty">Sem dados.</div>
-        </div>
-        <div class="vbar-legend">
-          <div class="item"><span class="dot" style="background:var(--bebidas)"></span>Bares</div>
-          <div class="item"><span class="dot" style="background:var(--ambulantes)"></span>Ambulantes</div>
+        <div class="vbar-wrap">
+          <div class="vbar-chart" id="chart-dias">
+            <div class="top-empty">Sem dados.</div>
+          </div>
+          <div class="vbar-legend">
+            <div class="item"><span class="dot" style="background:var(--bebidas)"></span>Bares</div>
+            <div class="item"><span class="dot" style="background:var(--ambulantes)"></span>Ambulantes</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1685,10 +1712,24 @@
           return { dia: d, bares, amb };
         });
         const maxV = Math.max(...totaisDia.flatMap(d => [d.bares, d.amb]), 1);
-        chartDias.innerHTML = totaisDia.map(d => {
-          const hBares = (d.bares / maxV) * 100;
-          const hAmb = (d.amb / maxV) * 100;
-          const [y, m, dd] = d.dia.split('-');
+        // Teto arredondado pra cima em múltiplos de 50k ou 10k
+        const step = maxV > 100000 ? 50000 : maxV > 20000 ? 10000 : 5000;
+        const teto = Math.ceil(maxV / step) * step;
+        const numLinhas = 5;
+        const fmtEixo = v => v >= 1000 ? `R$ ${Math.round(v/1000)}k` : `R$ ${v}`;
+        // Linhas de grade e labels Y
+        let yaxisHtml = '<div class="vbar-yaxis">';
+        for (let i = 0; i <= numLinhas; i++) {
+          const v = teto * (1 - i / numLinhas);
+          const top = (i / numLinhas) * 100;
+          yaxisHtml += `<div class="vbar-yline" style="top:${top}%"></div>`;
+          yaxisHtml += `<div class="vbar-ylabel" style="top:${top}%">${fmtEixo(v)}</div>`;
+        }
+        yaxisHtml += '</div>';
+        const gruposHtml = totaisDia.map(d => {
+          const hBares = (d.bares / teto) * 100;
+          const hAmb = (d.amb / teto) * 100;
+          const [, m, dd] = d.dia.split('-');
           return `<div class="vbar-group">
             <div class="bars">
               <div class="vbar-bar" style="height:${hBares}%;background:var(--bebidas)">
@@ -1701,6 +1742,7 @@
             <div class="xlabel">${dd}/${m}</div>
           </div>`;
         }).join('');
+        chartDias.innerHTML = yaxisHtml + gruposHtml;
       }
     }
 
