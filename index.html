@@ -1330,14 +1330,16 @@
       if (barras.length === 0) {
         chartEl.innerHTML = '<div class="top-empty">Sem dados para a data selecionada.</div>';
       } else {
+        const somaTotal = barras.reduce((s, b) => s + b.total, 0);
         const maxV = Math.max(...barras.map(b => b.total), 1);
         chartEl.innerHTML = barras.map(b => {
           const cor = b.grupo === 'BEBIDAS AMBULANTES' ? 'var(--ambulantes)' : 'var(--bebidas)';
           const pct = (b.total / maxV) * 100;
+          const pctTotal = somaTotal > 0 ? (b.total / somaTotal * 100) : 0;
           return `<div class="bar-row">
             <span class="name" title="${escapeHtml(b.op)}">${escapeHtml(b.op)}</span>
             <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${cor}"></div></div>
-            <span class="bar-val">${fmtBRL(b.total)}</span>
+            <span class="bar-val">${fmtBRL(b.total)}<small class="bar-pct">${pctTotal.toFixed(1).replace('.', ',')}%</small></span>
           </div>`;
         }).join('');
       }
