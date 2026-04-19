@@ -1258,29 +1258,31 @@
     document.querySelectorAll('.rg-ambulantes-pct').forEach(e => e.textContent = pctAmbX.toFixed(1).replace('.', ',') + '%');
     document.querySelectorAll('.rg-ticket').forEach(e => e.textContent = itens > 0 ? fmtBRL(geral / itens) : 'R$ 0,00');
 
-    // Separa operações por grupo macro (Bebidas / Alimentação) e renderiza 2 charts
-    function renderBar(chartId, grupoAlvo, cor) {
-      const opsGrupo = Object.entries(porOp).filter(([nome, v]) => {
-        if (v <= 0) return false;
-        const pp = DATA.find(p => p.operacao === nome); return pp && pp.grupo === grupoAlvo;
-      }).sort((a, b) => b[1] - a[1]);
-      const el = document.getElementById(chartId);
-      if (opsGrupo.length === 0) {
-        el.innerHTML = '<div class="top-empty">Sem dados para a data selecionada.</div>';
-        return;
+    // Renderiza gráfico de barras usando OPS_POR_DATA (fonte real de vendas por operação)
+    const diaChart = dataAtiva === 'todas' ? Object.keys(OPS_POR_DATA)[0] : dataAtiva;
+    const opsChart = OPS_POR_DATA[diaChart] || {};
+    const barras = Object.entries(opsChart).map(([op, prods]) => {
+      const total = prods.reduce((s, p) => s + p.valor, 0);
+      const grupo = OP_GRUPO[op] || 'BEBIDAS';
+      return { op, total, grupo };
+    }).filter(x => x.total > 0).sort((a, b) => b.total - a.total);
+    const chartEl = document.getElementById('chart-bebidas');
+    if (chartEl) {
+      if (barras.length === 0) {
+        chartEl.innerHTML = '<div class="top-empty">Sem dados para a data selecionada.</div>';
+      } else {
+        const maxV = Math.max(...barras.map(b => b.total), 1);
+        chartEl.innerHTML = barras.map(b => {
+          const cor = b.grupo === 'BEBIDAS AMBULANTES' ? 'var(--ambulantes)' : 'var(--bebidas)';
+          const pct = (b.total / maxV) * 100;
+          return `<div class="bar-row">
+            <span class="name" title="${escapeHtml(b.op)}">${escapeHtml(b.op)}</span>
+            <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${cor}"></div></div>
+            <span class="bar-val">${fmtBRL(b.total)}</span>
+          </div>`;
+        }).join('');
       }
-      const maxV = Math.max(...opsGrupo.map(([_, v]) => v), 1);
-      el.innerHTML = opsGrupo.map(([nome, valor]) => {
-        const pct = valor / maxV * 100;
-        return `<div class="bar-row">
-          <span class="name" title="${escapeHtml(nome)}">${escapeHtml(nome)}</span>
-          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${cor}"></div></div>
-          <span class="bar-val">${fmtBRL(valor)}</span>
-        </div>`;
-      }).join('');
     }
-    renderBar('chart-bebidas', 'BEBIDAS', 'var(--bebidas)');
-    renderBar('chart-alim', 'ALIMENTAÇÃO', 'var(--alim)');
 
     // Top 10 produtos (apenas no dashboard)
     const topProds = [];
