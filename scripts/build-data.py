@@ -214,7 +214,9 @@ def processar(xlsx_files: list[Path]):
     ops_por_data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "valor": 0, "categoria": "", "unit_hist": []})))
     amb_por_data = defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "valor": 0, "produtos": defaultdict(lambda: {"qtd": 0, "valor": 0})}))
     all_produtos = {}  # (nome_canonico, grupo) → preço (do cardápio, calculado pela média)
-    pedidos_por_data = defaultdict(set)  # YYYY-MM-DD → set de PedidoId únicos
+    pedidos_por_data = defaultdict(set)  # sessão → set de PedidoId únicos (total)
+    pedidos_bar_por_data = defaultdict(set)  # sessão → PedidoIds da aba BAR
+    pedidos_amb_por_data = defaultdict(set)  # sessão → PedidoIds da aba AMBULANTE
 
     total_linhas = 0
     total_dup = 0
@@ -281,6 +283,10 @@ def processar(xlsx_files: list[Path]):
 
                 if pedido_id:
                     pedidos_por_data[data_iso].add(pedido_id)
+                    if aba == "BAR":
+                        pedidos_bar_por_data[data_iso].add(pedido_id)
+                    else:
+                        pedidos_amb_por_data[data_iso].add(pedido_id)
 
                 # Cardápio
                 key = (produto, grupo)
@@ -377,7 +383,9 @@ def processar(xlsx_files: list[Path]):
                 dpd[data_iso][str(pid)] = dpd[data_iso].get(str(pid), 0) + (int(q) if q == int(q) else q)
 
     pedidos_out = {d: len(ids) for d, ids in pedidos_por_data.items()}
-    return data_list, dict(dpd), ops_out, amb_out, pedidos_out
+    pedidos_bar_out = {d: len(ids) for d, ids in pedidos_bar_por_data.items()}
+    pedidos_amb_out = {d: len(ids) for d, ids in pedidos_amb_por_data.items()}
+    return data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out
 
 
 # =============================================================================
@@ -392,7 +400,7 @@ def _sub_const(html, nome, valor):
     return re.sub(pattern, lambda m: novo, html, count=1, flags=re.DOTALL)
 
 
-def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out):
+def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out):
     html = HTML_PATH.read_text(encoding="utf-8")
 
     # DATA (lista, começa com [)
@@ -409,6 +417,8 @@ def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out):
     html = _sub_const(html, "OPS_POR_DATA", json.dumps(ops_out, ensure_ascii=False))
     html = _sub_const(html, "AMBULANTES_POR_DATA", json.dumps(amb_out, ensure_ascii=False))
     html = _sub_const(html, "PEDIDOS_POR_DATA", json.dumps(pedidos_out))
+    html = _sub_const(html, "PEDIDOS_BAR_POR_DATA", json.dumps(pedidos_bar_out))
+    html = _sub_const(html, "PEDIDOS_AMB_POR_DATA", json.dumps(pedidos_amb_out))
 
     HTML_PATH.write_text(html, encoding="utf-8")
 
@@ -428,9 +438,11 @@ def main():
         print("❌ Nenhum xlsx encontrado em", PLANILHAS_DIR)
         sys.exit(1)
 
-    data_list, dpd, ops_out, amb_out, pedidos_out = processar(xlsx_files)
-    injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out)
+    data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out = processar(xlsx_files)
+    injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out)
     print(f"   Pedidos únicos:      {sum(pedidos_out.values())} ({pedidos_out})")
+    print(f"   Pedidos BAR:         {sum(pedidos_bar_out.values())} ({pedidos_bar_out})")
+    print(f"   Pedidos AMB:         {sum(pedidos_amb_out.values())} ({pedidos_amb_out})")
     print(f"\n✅ HTML atualizado com {len(data_list)} produtos, {sum(len(v) for v in ops_out.values())} linhas OPS")
 
 
