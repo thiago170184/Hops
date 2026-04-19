@@ -24,6 +24,7 @@ Futuramente pode ser estendido pra baixar direto do Google Drive via API.
 import zipfile, re, json, sys, os
 import xml.etree.ElementTree as ET
 from collections import defaultdict, Counter
+from datetime import date, timedelta
 from pathlib import Path
 
 # =============================================================================
@@ -179,6 +180,29 @@ def categoria_eh_bebida(cat: str) -> bool:
     return c in {k.upper() for k in CATEGORIAS_BEBIDAS}
 
 
+# Sessão do evento: 17h do dia X → 08h do dia X+1.
+# Chave da sessão = data de INÍCIO (dia X). Retorna None se fora da janela.
+SESSOES_VALIDAS = {"2026-04-17", "2026-04-18"}
+
+def sessao_de(datetime_str):
+    """Dado 'YYYY-MM-DD HH:MM:SS...', retorna a chave da sessão ou None."""
+    if not datetime_str or len(datetime_str) < 13:
+        return None
+    try:
+        d = date.fromisoformat(datetime_str[:10])
+        hh = int(datetime_str[11:13])
+    except ValueError:
+        return None
+    if hh >= 17:
+        sess = d
+    elif hh < 8:
+        sess = d - timedelta(days=1)
+    else:
+        return None  # 08-16h: fora de sessão (gray window)
+    key = sess.isoformat()
+    return key if key in SESSOES_VALIDAS else None
+
+
 # =============================================================================
 # Processamento
 # =============================================================================
@@ -213,8 +237,8 @@ def processar(xlsx_files: list[Path]):
                     continue
                 ids_vistos.add(pedido_det_id)
 
-                data_iso = (r.get(COL_DATA_BRASILIA) or "")[:10]  # YYYY-MM-DD
-                if not data_iso or "2026" not in data_iso:
+                data_iso = sessao_de(r.get(COL_DATA_BRASILIA) or "")
+                if not data_iso:
                     continue
 
                 pedido_id = (r.get(COL_PEDIDO_ID) or "").strip()
@@ -279,7 +303,7 @@ def processar(xlsx_files: list[Path]):
     print(f"   Linhas duplicadas:   {total_dup}  (dedup via PedidoDetalheId)")
     print(f"   Ignoradas (não-beb): {total_nao_bebida}")
     print(f"   IDs únicos:          {len(ids_vistos)}")
-    print(f"   Datas:               {sorted(ops_por_data.keys())}")
+    print(f"   Sessões:             {sorted(ops_por_data.keys())}")
 
     # Normaliza estruturas pra JSON
     def calcular_preco_cheio(hist):
