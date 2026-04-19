@@ -635,10 +635,10 @@
   <div class="tab-panel active" id="tab-dashboard">
     <div class="kpis">
       <div class="kpi destaque">
-        <div class="icon" style="background:#dff5e9;color:#006c48">
+        <div class="icon" style="background:#e6eaf7;color:#1e3a8a">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M5 5h10a4 4 0 0 1 0 8H9a4 4 0 0 0 0 8h10"/></svg>
         </div>
-        <span class="k">Total Geral</span>
+        <span class="k">Faturamento Total</span>
         <span class="v" id="kpi-total">R$ 0,00</span>
         <span class="hint"><span id="kpi-itens">0</span> itens vendidos</span>
       </div>
@@ -646,17 +646,9 @@
         <div class="icon" style="background:var(--bebidas-bg);color:var(--bebidas)">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l-1 20H9z"/><path d="M8 6h8"/></svg>
         </div>
-        <span class="k">Bebidas</span>
-        <span class="v" id="kpi-bebidas">R$ 0,00</span>
-        <span class="hint"><span id="kpi-bebidas-pct">0%</span> do total</span>
-      </div>
-      <div class="kpi kpi-hidden-alim" style="display:none">
-        <div class="icon" style="background:var(--alim-bg);color:var(--alim)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7a3 3 0 0 0 3 3h1v10h4V2"/><path d="M14 2v10M14 12h4l1-10h-4"/></svg>
-        </div>
-        <span class="k">Alimentação</span>
-        <span class="v" id="kpi-alim">R$ 0,00</span>
-        <span class="hint"><span id="kpi-alim-pct">0%</span> do total</span>
+        <span class="k">Operações</span>
+        <span class="v" id="kpi-ops">0</span>
+        <span class="hint"><span id="kpi-ops-hint">PDVs operando</span></span>
       </div>
       <div class="kpi">
         <div class="icon" style="background:#fef3c7;color:#854d0e">
@@ -670,7 +662,7 @@
 
     <div class="dash-grid">
       <div class="dash-card">
-        <h3>🥤 Bebidas <small>por operação</small></h3>
+        <h3>Vendas <small>por operação</small></h3>
         <div class="bar-chart" id="chart-bebidas">
           <div class="top-empty">Sem dados para a data selecionada.</div>
         </div>
@@ -700,14 +692,6 @@
         <div class="dt-wrap"><select id="filtro-data" class="filtro-data-el"></select></div>
       </div>
       <div class="select-wrap">
-        <select id="f-grupo">
-          <option value="">Todos os grupos</option>
-          <option value="BEBIDAS">🥤 Bebidas</option>
-          <option value="ALIMENTAÇÃO">🍽️ Alimentação</option>
-          <option value="OUTROS">📋 Outros</option>
-        </select>
-      </div>
-      <div class="select-wrap">
         <select id="f-operacao">
           <option value="">Todas as operações</option>
           <option value="AJUSTES">AJUSTES</option><option value="BARES">BARES</option><option value="BUFFET PRIME">BUFFET PRIME</option><option value="CERVEJARIA">CERVEJARIA</option><option value="COMIDA TROPEIRA">COMIDA TROPEIRA</option><option value="CONE MIO">CONE MIO</option><option value="DOCE MACIEL">DOCE MACIEL</option><option value="ESPETO JALES">ESPETO JALES</option><option value="ESPETO SECRETARIO">ESPETO SECRETARIO</option><option value="HOT DOG DO JUCA">HOT DOG DO JUCA</option><option value="KREP TIÃO">KREP TIÃO</option><option value="NOVA ERA">NOVA ERA</option><option value="PASTEL FERNANDO">PASTEL FERNANDO</option><option value="WHISKERIA">WHISKERIA</option>
@@ -719,24 +703,19 @@
 
     <div class="resumo-grupos">
       <div class="rg-item total">
-        <div class="l">Total Geral</div>
+        <div class="l">Faturamento Total</div>
         <div class="v rg-total">R$ 0,00</div>
         <div class="s"><span class="rg-itens">0</span> itens vendidos</div>
       </div>
       <div class="rg-item">
-        <div class="l"><span class="dot" style="background:#6b8fd6"></span>Bebidas</div>
-        <div class="v rg-bebidas">R$ 0,00</div>
-        <div class="s"><span class="rg-bebidas-pct">0%</span> do total</div>
-      </div>
-      <div class="rg-item" style="display:none">
-        <div class="l"><span class="dot" style="background:#ef4444"></span>Alimentação</div>
-        <div class="v rg-alim">R$ 0,00</div>
-        <div class="s"><span class="rg-alim-pct">0%</span> do total</div>
+        <div class="l">Operações</div>
+        <div class="v rg-ops">0</div>
+        <div class="s">PDVs com venda</div>
       </div>
       <div class="rg-item">
-        <div class="l"><span class="dot" style="background:#9ca3af"></span>Outros</div>
-        <div class="v rg-outros">R$ 0,00</div>
-        <div class="s"><span class="rg-outros-pct">0%</span> do total</div>
+        <div class="l">Ticket Médio</div>
+        <div class="v rg-ticket">R$ 0,00</div>
+        <div class="s">Por item vendido</div>
       </div>
     </div>
 
@@ -758,14 +737,6 @@
         <span class="lbl">Data</span>
         <div class="dt-wrap"><select id="filtro-data-prod" class="filtro-data-el"></select></div>
       </div>
-      <div class="select-wrap">
-        <select id="fp-grupo">
-          <option value="">Todos os grupos</option>
-          <option value="BEBIDAS">🥤 Bebidas</option>
-          <option value="ALIMENTAÇÃO">🍽️ Alimentação</option>
-          <option value="OUTROS">📋 Outros</option>
-        </select>
-      </div>
     </div>
 
     <div class="tbl-produtos-wrap">
@@ -773,8 +744,7 @@
         <thead>
           <tr>
             <th style="width:64px" data-sort="id">#<span class="sort-ind">▾</span></th>
-            <th style="width:140px" data-sort="grupo">Grupo<span class="sort-ind">▾</span></th>
-            <th style="width:170px" data-sort="operacao">Operação<span class="sort-ind">▾</span></th>
+                        <th style="width:170px" data-sort="operacao">Operação<span class="sort-ind">▾</span></th>
             <th style="width:220px" data-sort="categoria">Categoria<span class="sort-ind">▾</span></th>
             <th style="min-width:200px" data-sort="nome">Produto<span class="sort-ind">▾</span></th>
             <th style="width:112px" class="num" data-sort="preco">Preço Unit.<span class="sort-ind">▾</span></th>
@@ -785,7 +755,7 @@
         <tbody id="tbl-produtos-body"></tbody>
         <tfoot>
           <tr class="tbl-tot-row">
-            <td colspan="6" style="text-align:right">TOTAL GERAL</td>
+            <td colspan="5" style="text-align:right">TOTAL GERAL</td>
             <td class="num" id="tbl-tot-qtd">0</td>
             <td class="num" id="tbl-tot-val">R$ 0,00</td>
           </tr>
@@ -799,24 +769,19 @@
   <div class="tab-panel" id="tab-operacoes">
     <div class="resumo-grupos">
       <div class="rg-item total">
-        <div class="l">Total Geral</div>
+        <div class="l">Faturamento Total</div>
         <div class="v rg-total">R$ 0,00</div>
         <div class="s"><span class="rg-itens">0</span> itens vendidos</div>
       </div>
       <div class="rg-item">
-        <div class="l"><span class="dot" style="background:#6b8fd6"></span>Bebidas</div>
-        <div class="v rg-bebidas">R$ 0,00</div>
-        <div class="s"><span class="rg-bebidas-pct">0%</span> do total</div>
-      </div>
-      <div class="rg-item" style="display:none">
-        <div class="l"><span class="dot" style="background:#ef4444"></span>Alimentação</div>
-        <div class="v rg-alim">R$ 0,00</div>
-        <div class="s"><span class="rg-alim-pct">0%</span> do total</div>
+        <div class="l">Operações</div>
+        <div class="v rg-ops">0</div>
+        <div class="s">PDVs com venda</div>
       </div>
       <div class="rg-item">
-        <div class="l"><span class="dot" style="background:#9ca3af"></span>Outros</div>
-        <div class="v rg-outros">R$ 0,00</div>
-        <div class="s"><span class="rg-outros-pct">0%</span> do total</div>
+        <div class="l">Ticket Médio</div>
+        <div class="v rg-ticket">R$ 0,00</div>
+        <div class="s">Por item vendido</div>
       </div>
     </div>
 
@@ -849,7 +814,7 @@
   const PROD_GRUPO = {};
   DATA.forEach(p => { PROD_GRUPO[p.nome.toUpperCase()] = p.grupo; });
 
-  const GRUPOS = ['BEBIDAS', 'ALIMENTAÇÃO', 'OUTROS'];
+  const GRUPOS = ['BEBIDAS'];
   const GRUPO_ICON = { 'BEBIDAS': '🥤', 'ALIMENTAÇÃO': '🍽️', 'OUTROS': '📋' };
   const GRUPO_CLS = { 'BEBIDAS': 'grupo-bebidas', 'ALIMENTAÇÃO': 'grupo-alimentacao', 'OUTROS': 'grupo-outros' };
   const GRUPO_COLOR = { 'BEBIDAS': 'var(--bebidas)', 'ALIMENTAÇÃO': 'var(--alim)', 'OUTROS': 'var(--outros)' };
@@ -967,13 +932,11 @@
   }
 
   function aplicarFiltros() {
-    const grupoF = document.getElementById('f-grupo').value;
     const opF = document.getElementById('f-operacao').value;
 
     document.querySelectorAll('tbody tr').forEach(tr => {
-      const g = tr.dataset.grupo;
       const o = tr.dataset.operacao;
-      const match = (!grupoF || g === grupoF) && (!opF || o === opF);
+      const match = (!opF || o === opF);
       tr.classList.toggle('hidden', !match);
     });
     document.querySelectorAll('.cat').forEach(cat => {
@@ -990,7 +953,6 @@
     });
   }
 
-  document.getElementById('f-grupo').addEventListener('change', aplicarFiltros);
   document.getElementById('f-operacao').addEventListener('change', aplicarFiltros);
 
   function recalc() {
@@ -1044,14 +1006,14 @@
     // Dashboard KPIs
     document.getElementById('kpi-total').textContent = fmtBRL(geral);
     document.getElementById('kpi-itens').textContent = fmtInt(itens);
-    document.getElementById('kpi-bebidas').textContent = fmtBRL(porGrupo['BEBIDAS'] || 0);
-    document.getElementById('kpi-alim').textContent = fmtBRL(porGrupo['ALIMENTAÇÃO'] || 0);
-    const pctBeb = geral > 0 ? (porGrupo['BEBIDAS'] || 0) / geral * 100 : 0;
-    const pctAli = geral > 0 ? (porGrupo['ALIMENTAÇÃO'] || 0) / geral * 100 : 0;
-    const pctOut = geral > 0 ? (porGrupo['OUTROS'] || 0) / geral * 100 : 0;
-    document.getElementById('kpi-bebidas-pct').textContent = pctBeb.toFixed(1).replace('.', ',') + '%';
-    document.getElementById('kpi-alim-pct').textContent = pctAli.toFixed(1).replace('.', ',') + '%';
+    const pctBeb = 100, pctAli = 0, pctOut = 0;
     document.getElementById('kpi-ticket').textContent = itens > 0 ? fmtBRL(geral / itens) : 'R$ 0,00';
+    // Contar operações com venda
+    const diaAtual = dataAtiva === 'todas' ? Object.keys(OPS_POR_DATA)[0] : dataAtiva;
+    const opsDoDia = OPS_POR_DATA[diaAtual] || {};
+    const numOps = Object.keys(opsDoDia).length;
+    const elOps = document.getElementById('kpi-ops');
+    if (elOps) elOps.textContent = numOps;
 
 
     // Resumo no topo da aba Vendas
@@ -1059,7 +1021,12 @@
     document.querySelectorAll('.rg-itens').forEach(e => e.textContent = fmtInt(itens));
     document.querySelectorAll('.rg-bebidas').forEach(e => e.textContent = fmtBRL(porGrupo['BEBIDAS'] || 0));
     document.querySelectorAll('.rg-alim').forEach(e => e.textContent = fmtBRL(porGrupo['ALIMENTAÇÃO'] || 0));
-    document.querySelectorAll('.rg-outros').forEach(e => e.textContent = fmtBRL(porGrupo['OUTROS'] || 0));
+    // Painel resumo simplificado (só Bebidas agora)
+    const diaAtualRes = dataAtiva === 'todas' ? Object.keys(OPS_POR_DATA)[0] : dataAtiva;
+    const opsDoDiaRes = OPS_POR_DATA[diaAtualRes] || {};
+    const numOpsRes = Object.keys(opsDoDiaRes).length;
+    document.querySelectorAll('.rg-ops').forEach(e => e.textContent = numOpsRes);
+    document.querySelectorAll('.rg-ticket').forEach(e => e.textContent = itens > 0 ? fmtBRL(geral / itens) : 'R$ 0,00');
     document.querySelectorAll('.rg-bebidas-pct').forEach(e => e.textContent = pctBeb.toFixed(1).replace('.', ',') + '%');
     document.querySelectorAll('.rg-alim-pct').forEach(e => e.textContent = pctAli.toFixed(1).replace('.', ',') + '%');
     document.querySelectorAll('.rg-outros-pct').forEach(e => e.textContent = pctOut.toFixed(1).replace('.', ',') + '%');
@@ -1120,14 +1087,11 @@
   function renderProdutos() {
     const tbody = document.getElementById('tbl-produtos-body');
     const termo = (document.getElementById('busca-prod').value || '').trim().toLowerCase();
-    const grupoF = document.getElementById('fp-grupo').value;
-
     // Clona e enriquece com total
     const rows = DATA.map(p => {
       const qtd = qtds.get(p.id) || 0;
       return { ...p, qtd, total: qtd * p.preco };
     }).filter(p => {
-      if (grupoF && p.grupo !== grupoF) return false;
       if (termo) {
         const hay = (p.nome + ' ' + p.categoria + ' ' + p.operacao + ' ' + p.grupo).toLowerCase();
         if (!hay.includes(termo)) return false;
@@ -1154,7 +1118,6 @@
       return `
         <tr data-id="${p.id}">
           <td style="color:var(--ink-subtle);font-size:11px;font-weight:700;font-variant-numeric:tabular-nums">${String(p.id + 1).padStart(3, '0')}</td>
-          <td><span class="chip-grupo ${chipCls}">${chipIcon} ${p.grupo}</span></td>
           <td style="font-weight:700;color:var(--ink-soft)" title="${escapeHtml(p.operacao)}">${escapeHtml(p.operacao)}</td>
           <td style="font-size:11.5px;color:var(--ink-muted)" title="${escapeHtml(p.categoria)}">${escapeHtml(p.categoria)}</td>
           <td style="font-weight:600;color:var(--ink)" title="${escapeHtml(p.nome)}">${escapeHtml(p.nome)}</td>
