@@ -75,6 +75,10 @@ CATEGORIAS_BEBIDAS = {
     "WHISKERIA - BEBIDAS LATA",
     "COMIDA TROPEIRA - BEBIDAS",
 }
+# Operações de COMIDA que vendem algumas bebidas mas devem ser excluídas
+# do relatório de bebidas (o foco é operações primariamente de bebida).
+OPERACOES_EXCLUIDAS = {"COMIDA TROPEIRA", "NOVA ERA"}
+
 # BUFFET PRIME é comida (camarote) — excluído do relatório. Mantemos o PDV
 # mapeado em MAPA_PDV_OPERACAO apenas para que a operação apareça quando
 # houver bebidas vendidas ali no futuro.
@@ -240,6 +244,9 @@ def processar(xlsx_files: list[Path]):
                 else:  # AMBULANTE
                     operacao = "AMBULANTES"
                     grupo = "BEBIDAS AMBULANTES"
+
+                if operacao in OPERACOES_EXCLUIDAS:
+                    continue
 
                 bucket = ops_por_data[data_iso][operacao][produto]
                 bucket["qtd"] += qtd
