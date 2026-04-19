@@ -1187,9 +1187,17 @@
   document.getElementById('busca-prod').addEventListener('input', renderProdutos);
   document.getElementById('fp-grupo').addEventListener('change', renderProdutos);
 
-  // Ao trocar de aba, re-renderiza produtos/operações para pegar dados atualizados
+  // Ao trocar de aba, limpa buscas e re-renderiza produtos/operações
   const _setTab = setTab;
   setTab = function(name) {
+    // Limpa campos de busca das outras abas
+    const buscaProd = document.getElementById('busca-prod');
+    if (buscaProd && name !== 'produtos') buscaProd.value = '';
+    const buscaOps = document.getElementById('busca-ops');
+    if (buscaOps && name !== 'operacoes') {
+      buscaOps.value = '';
+      if (typeof aplicarBuscaOps === 'function') aplicarBuscaOps();
+    }
     _setTab(name);
     if (name === 'produtos') renderProdutos();
     if (name === 'operacoes') renderOperacoes();
