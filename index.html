@@ -562,6 +562,54 @@
   }
   table.tbl-produtos tbody tr:nth-child(even) td { background: #fafbfc; }
   table.tbl-produtos tbody tr:hover td { background: var(--soft); }
+  /* Padronização de fontes na tabela Produtos */
+  table.tbl-produtos td {
+    font-size: 12.5px;
+    color: var(--ink);
+    font-family: inherit;
+    line-height: 1.4;
+  }
+  table.tbl-produtos td.cell-id {
+    font-size: 11px; font-weight: 700;
+    color: var(--ink-subtle);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+  table.tbl-produtos td.cell-op {
+    font-size: 12.5px; font-weight: 700;
+    color: var(--ink-soft);
+  }
+  table.tbl-produtos td.cell-cat {
+    font-size: 12.5px; font-weight: 500;
+    color: var(--ink-muted);
+  }
+  table.tbl-produtos td.cell-prod {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--ink);
+  }
+  table.tbl-produtos td.cell-preco {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+  table.tbl-produtos td.cell-qtd .qtd-val {
+    font-size: 12.5px; font-weight: 700;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  table.tbl-produtos td.cell-qtd .qtd-val[data-zero="true"] {
+    color: var(--ink-subtle); font-weight: 500;
+  }
+  table.tbl-produtos td.cell-total {
+    font-size: 13px; font-weight: 800;
+    color: var(--navy);
+    font-variant-numeric: tabular-nums;
+  }
+  .chip-grupo {
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
   table.tbl-produtos tbody tr.hidden { display: none; }
   .chip-grupo {
     display: inline-block; padding: 2px 8px; border-radius: 999px;
@@ -1157,13 +1205,13 @@
       const chipIcon = p.grupo === 'BEBIDAS' ? '🥤' : p.grupo === 'BEBIDAS AMBULANTES' ? '🎒' : p.grupo === 'ALIMENTAÇÃO' ? '🍽️' : '📋';
       return `
         <tr data-id="${p.id}">
-          <td style="color:var(--ink-subtle);font-size:11px;font-weight:700;font-variant-numeric:tabular-nums">${String(p.id + 1).padStart(3, '0')}</td>
-          <td style="font-weight:700;color:var(--ink-soft)" title="${escapeHtml(p.operacao)}">${escapeHtml(p.operacao)}</td>
-          <td style="font-size:11.5px;color:var(--ink-muted)" title="${escapeHtml(p.categoria)}">${escapeHtml(p.categoria)}</td>
-          <td style="font-weight:600;color:var(--ink)" title="${escapeHtml(p.nome)}">${escapeHtml(p.nome)}</td>
-          <td class="num">${fmtBRL(p.preco)}</td>
-          <td class="qtd"><span class="qtd-val" data-id="${p.id}">${p.qtd > 0 ? p.qtd.toLocaleString('pt-BR') : '—'}</span></td>
-          <td class="num total" style="font-weight:800">${fmtBRL(p.total)}</td>
+          <td class="cell-id">${String(p.id + 1).padStart(3, '0')}</td>
+          <td class="cell-op" title="${escapeHtml(p.operacao)}">${escapeHtml(p.operacao)}</td>
+          <td class="cell-cat" title="${escapeHtml(p.categoria)}">${escapeHtml(p.categoria)}</td>
+          <td class="cell-prod" title="${escapeHtml(p.nome)}">${escapeHtml(p.nome)}</td>
+          <td class="num cell-preco">${fmtBRL(p.preco)}</td>
+          <td class="qtd cell-qtd"><span class="qtd-val" data-id="${p.id}">${p.qtd > 0 ? p.qtd.toLocaleString('pt-BR') : '—'}</span></td>
+          <td class="num total cell-total">${fmtBRL(p.total)}</td>
         </tr>
       `;
     }).join('');
