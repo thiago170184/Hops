@@ -490,7 +490,7 @@
   }
   .amb-section h3 small { font-size: 10.5px; font-weight: 500; color: var(--ink-subtle); letter-spacing: 0; text-transform: none; }
   .amb-kpis {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
     margin-bottom: 14px;
   }
   .amb-kpi {
@@ -555,7 +555,7 @@
   .amb-card.bot .amb-vlr { color: #c2410c; }
 
   @media (max-width: 768px) {
-    .amb-kpis { grid-template-columns: 1fr; }
+    .amb-kpis { grid-template-columns: repeat(2, 1fr); }
     .amb-topbot { grid-template-columns: 1fr; }
     .amb-info .term { font-size: 13px; }
     .amb-vlr { font-size: 16px; }
@@ -1691,6 +1691,7 @@
     const ticketMedio = qtde > 0 ? totalV / qtde : 0;
     const prodMedio = qtde > 0 ? amb.reduce((s, a) => s + a.produtos, 0) / qtde : 0;
 
+    const mediaUnPorAmb = qtde > 0 ? totalU / qtde : 0;
     kpisEl.innerHTML = `
       <div class="amb-kpi">
         <span class="l">Quantidade</span>
@@ -1703,9 +1704,14 @@
         <span class="h">por ambulante</span>
       </div>
       <div class="amb-kpi">
-        <span class="l">Produtos</span>
-        <span class="v">${prodMedio.toFixed(1).replace('.', ',')}</span>
-        <span class="h">média de SKUs por ambulante</span>
+        <span class="l">Produtos / Ambulante</span>
+        <span class="v">${mediaUnPorAmb.toFixed(1).replace('.', ',')}</span>
+        <span class="h">média de unidades vendidas</span>
+      </div>
+      <div class="amb-kpi">
+        <span class="l">Total Vendido</span>
+        <span class="v">${totalU.toLocaleString('pt-BR')}</span>
+        <span class="h">unidades pelos ambulantes</span>
       </div>
     `;
 
