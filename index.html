@@ -1337,13 +1337,7 @@
       }
     }
 
-    // Top 10 produtos (apenas no dashboard)
-    const topProds = [];
-    for (const p of DATA) {
-      const qtd = qtds.get(p.id) || 0;
-      const total = qtd * p.preco;
-      if (total > 0) topProds.push({ nome: p.nome, op: p.operacao, total, qtd });
-    }
+    // Top 10 produtos — usa topProds já preenchido pelo loop inicial (fonte OPS_POR_DATA)
     const top = topProds.sort((a, b) => b.total - a.total).slice(0, 10);
     const topEl = document.getElementById('top-produtos');
     if (topEl) {
