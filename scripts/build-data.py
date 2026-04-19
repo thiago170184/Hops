@@ -190,7 +190,9 @@ def processar(xlsx_files: list[Path]):
                 produto = normalizar_produto(r.get("Q"))
                 try: qtd = float(r.get("N") or 0)
                 except: qtd = 0
-                try: valor = float(r.get("O") or 0)
+                # col O = ValorProduto (preço unitário do cardápio)
+                # col D = ValorPedido (total da linha = qtd × ValorProduto) — usar este
+                try: valor = float(r.get("D") or 0)
                 except: valor = 0
                 terminal = (r.get("U") or "").strip()
 
