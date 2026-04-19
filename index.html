@@ -2358,14 +2358,25 @@
         if (!agg[op]) agg[op] = {};
         for (const p of por_op[op]) {
           const key = p.produto;
-          if (!agg[op][key]) agg[op][key] = { produto: p.produto, qtd: 0, valor: 0, categoria: p.categoria };
+          if (!agg[op][key]) agg[op][key] = { produto: p.produto, qtd: 0, valor: 0, categoria: p.categoria, preco: p.preco, _precos: {} };
           agg[op][key].qtd += p.qtd;
           agg[op][key].valor += p.valor;
+          // Moda de preço ponderada por quantidade entre dias
+          if (typeof p.preco === 'number') {
+            agg[op][key]._precos[p.preco] = (agg[op][key]._precos[p.preco] || 0) + p.qtd;
+          }
         }
       }
     }
     const out = {};
-    for (const op in agg) out[op] = Object.values(agg[op]);
+    for (const op in agg) {
+      out[op] = Object.values(agg[op]).map(item => {
+        const modaEntry = Object.entries(item._precos).sort((a, b) => b[1] - a[1])[0];
+        if (modaEntry) item.preco = parseFloat(modaEntry[0]);
+        delete item._precos;
+        return item;
+      });
+    }
     return out;
   }
   // AMBULANTES agregado por terminal através das datas ativas
