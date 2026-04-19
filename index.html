@@ -1657,7 +1657,8 @@
         const q = qtds.get(id) || 0;
         tot += q * DATA_BY_ID[id].preco;
       });
-      cat.querySelector('.cat-total').textContent = fmtBRL(tot);
+      const catTot = cat.querySelector('.cat-total');
+      if (catTot) catTot.textContent = fmtBRL(tot);
     });
     document.querySelectorAll('.op[data-op]').forEach(op => {
       const opNome = op.dataset.op;
@@ -1666,7 +1667,8 @@
     });
     document.querySelectorAll('.grupo').forEach(gr => {
       const gNome = gr.dataset.grupo;
-      gr.querySelector('.grupo-total').textContent = fmtBRL(porGrupo[gNome] || 0);
+      const el = gr.querySelector('.grupo-total');
+      if (el) el.textContent = fmtBRL(porGrupo[gNome] || 0);
     });
 
     // Dashboard KPIs
