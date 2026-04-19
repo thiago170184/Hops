@@ -642,7 +642,146 @@
   #kpi-alim, #chart-alim { display: none; }
 
 
+
+  /* ===================================================================
+     RESPONSIVO — mobile (≤ 768px) e celulares pequenos (≤ 480px)
+  =================================================================== */
+  @media (max-width: 768px) {
+    .container { padding: 14px 10px 40px; }
+
+    /* Header compacto */
+    .doc-header { padding: 16px 18px; gap: 14px; }
+    .doc-logo { width: 58px; height: 58px; border-radius: 10px; }
+    .doc-title { font-size: 18px; margin-bottom: 10px; }
+    .doc-meta { gap: 12px 18px; padding-top: 10px; }
+    .meta-value { font-size: 12.5px; }
+    .meta-label { font-size: 9px; }
+
+    /* Tabs com scroll horizontal */
+    .tabs { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding: 3px; }
+    .tab { padding: 8px 14px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+
+    /* KPIs: 4 → 2×2 */
+    .kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .kpi { padding: 14px 14px; min-height: 98px; }
+    .kpi .v { font-size: 20px; }
+    .kpi.destaque .v { font-size: 22px; }
+    .kpi .k { font-size: 10px; padding-right: 34px; }
+    .kpi .icon { width: 26px; height: 26px; top: 12px; right: 12px; }
+
+    /* Painel resumo-grupos: stack 2×2 */
+    .resumo-grupos {
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 16px;
+      padding: 14px 16px;
+    }
+    .rg-item { padding: 0 0; border-left: 0; }
+    .rg-item .l { font-size: 9.5px; }
+    .rg-item .v { font-size: 18px; }
+    .rg-item.total .v { font-size: 22px; }
+    .rg-item .s { font-size: 10px; }
+
+    /* Filtros: empilhar */
+    .filtros { padding: 12px; gap: 8px; }
+    .filtros .data-grp { flex: 0 0 auto; }
+    .search-wrap { width: 100%; min-width: 100%; flex: 1 1 100%; }
+    .select-wrap { flex: 1 1 auto; }
+    .btn { padding: 7px 10px; font-size: 11px; }
+
+    /* Dashboard grid colapsa pra 1 coluna */
+    .dash-grid { grid-template-columns: 1fr; }
+    .dash-card { padding: 14px 16px; }
+    .bar-chart .bar-row { font-size: 11.5px; gap: 8px; }
+    .bar-row .name { width: 90px; font-size: 11px; }
+    .bar-val { width: 80px; font-size: 11px; }
+
+    /* Grupo (card grande Bebidas/Ambulantes) */
+    .grupo-header { padding: 14px 16px; gap: 12px; }
+    .grupo-icon { width: 46px; height: 46px; font-size: 22px; border-radius: 10px; }
+    .grupo-info { min-width: 0; flex: 1 1 auto; }
+    .grupo-info .t { font-size: 18px; }
+    .grupo-info .n { font-size: 9px; }
+    .grupo-stats { gap: 14px; flex: 1 1 100%; justify-content: space-between; }
+    .grupo-stats .stat .k { font-size: 9px; }
+    .grupo-stats .stat .v { font-size: 13px; }
+    .grupo-stats .stat.big .v { font-size: 18px; }
+    .grupo-body { padding: 12px; }
+
+    /* Operação colapsável dentro do grupo */
+    .op-header { padding: 10px 12px; gap: 8px; }
+    .op-nome { font-size: 12.5px; }
+    .op-count { font-size: 9.5px; padding: 2px 8px; }
+    .op-total { min-width: 90px; font-size: 13px; }
+
+    /* ==== Aba OPERAÇÕES — cards ==== */
+    .op-card-header {
+      flex-wrap: wrap;
+      gap: 10px 8px;
+      padding: 12px 14px;
+    }
+    .op-card-title { flex: 1 1 100%; order: 1; }
+    .op-card-chev { order: 0; }
+    .op-card-title .lbl { font-size: 9px; }
+    .op-card-title .nm {
+      font-size: 15px;
+      white-space: normal;
+      word-break: break-word;
+    }
+    .busca-hit {
+      display: inline-block;
+      margin: 4px 0 0 0 !important;
+      font-size: 9px !important;
+      padding: 2px 8px !important;
+    }
+    .op-card-stats {
+      flex: 1 1 100%;
+      order: 2;
+      justify-content: space-between;
+      gap: 10px;
+      border-top: 1px solid var(--divider);
+      padding-top: 10px;
+    }
+    .op-card-stats .stat .k { font-size: 9px; }
+    .op-card-stats .stat .v { font-size: 13px; }
+    .op-card-stats .stat.big .v { font-size: 16px; }
+
+    /* Tabela dentro da operação — fonte menor */
+    table.tbl-ops th { padding: 8px 10px; font-size: 9.5px; }
+    table.tbl-ops td { padding: 7px 10px; font-size: 11.5px; }
+
+    /* Tabela Produtos — fonte menor */
+    table.tbl-produtos th { padding: 8px 10px; font-size: 9.5px; }
+    table.tbl-produtos td { padding: 7px 10px; font-size: 11.5px; }
+    table.tbl-produtos td.cell-prod,
+    table.tbl-produtos td.cell-op,
+    table.tbl-produtos td.cell-cat { font-size: 11.5px; }
+
+    /* Top 10 produtos */
+    .top-item { grid-template-columns: 28px 1fr auto; gap: 8px; padding: 8px 10px; font-size: 11.5px; }
+    .top-item .nm small { font-size: 10px; }
+
+    /* Modal/Modal-like — nada por enquanto */
+  }
+
+  @media (max-width: 480px) {
+    .doc-header { padding: 14px 14px; gap: 12px; }
+    .doc-logo { width: 48px; height: 48px; }
+    .doc-title { font-size: 16px; }
+    .doc-meta { flex-direction: column; gap: 8px; }
+
+    /* KPIs: 1 coluna */
+    .kpis { grid-template-columns: 1fr; }
+    .kpi .v { font-size: 22px; }
+
+    /* Resumo-grupos: 1 coluna */
+    .resumo-grupos { grid-template-columns: 1fr; }
+
+    /* Tabs menores */
+    .tab { padding: 7px 11px; font-size: 11px; }
+  }
+
   @media print {
+
     body { background: #fff; }
     .tabs, .filtros, .actions { display: none; }
     .tab-panel { display: block !important; }
