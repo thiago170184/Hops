@@ -1973,8 +1973,10 @@
   function renderCardapio() {
     const tbody = document.getElementById('cd-tbody');
     if (!tbody) return;
-    const termo = (document.getElementById('cd-busca').value || '').trim().toLowerCase();
-    const filtro = document.getElementById('cd-filtro').value;
+    const buscaEl = document.getElementById('cd-busca');
+    const filtroEl = document.getElementById('cd-filtro');
+    const termo = ((buscaEl && buscaEl.value) || '').trim().toLowerCase();
+    const filtro = (filtroEl && filtroEl.value) || 'todos';
 
     const opsData = opsAtivas();
 
