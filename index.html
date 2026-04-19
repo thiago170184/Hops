@@ -535,6 +535,13 @@
   }
   table.tbl-ops tbody tr:nth-child(even) td { background: #fafbfc; }
   table.tbl-ops tbody tr:hover td { background: var(--soft); }
+
+  table.tbl-ops td.num,
+  table.tbl-ops th.num { white-space: nowrap; overflow: visible; }
+  table.tbl-ops tfoot td { white-space: nowrap; }
+  table.tbl-ops td:first-child,
+  table.tbl-ops td:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
   table.tbl-ops tfoot td {
     font-weight: 900 !important;
     background: var(--bebidas-bg) !important;
@@ -1477,10 +1484,10 @@
             <table class="tbl-ops">
               <thead>
                 <tr>
-                  <th style="width:44%" class="sortable" data-sort-k="produto">Produto<span class="ops-ind">▾</span></th>
-                  <th style="width:24%" class="sortable" data-sort-k="categoria">Categoria<span class="ops-ind">▾</span></th>
-                  <th style="width:14%" class="num sortable" data-sort-k="qtd">Qtde<span class="ops-ind">▾</span></th>
-                  <th style="width:18%" class="num sortable" data-sort-k="valor">Valor<span class="ops-ind">▾</span></th>
+                  <th style="width:32%" class="sortable" data-sort-k="produto">Produto<span class="ops-ind">▾</span></th>
+                  <th style="width:16%" class="sortable" data-sort-k="categoria">Categoria<span class="ops-ind">▾</span></th>
+                  <th style="width:18%" class="num sortable" data-sort-k="qtd">Qtde<span class="ops-ind">▾</span></th>
+                  <th style="width:34%" class="num sortable" data-sort-k="valor">Valor<span class="ops-ind">▾</span></th>
                 </tr>
               </thead>
               <tbody>${rowsHtml}</tbody>
