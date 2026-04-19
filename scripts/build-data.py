@@ -84,13 +84,14 @@ CATEGORIAS_BEBIDAS = {
 # Parser de xlsx
 # =============================================================================
 def read_sheet(xlsx_path: Path, sheet_name: str):
-    """Lê uma aba do xlsx pelo nome. Retorna lista de dicionários por linha."""
+    """Lê uma aba do xlsx pelo nome. Retorna lista de dicionários com chaves
+    = nome da coluna (da primeira linha, o header). A primeira linha (header)
+    NÃO é retornada. Tolerante a reordenação de colunas entre planilhas.
+    """
     with zipfile.ZipFile(xlsx_path) as z:
-        # Mapeia sheet_name → sheet_file
         with z.open("xl/workbook.xml") as f:
             wb = ET.parse(f).getroot()
-        rels_path = "xl/_rels/workbook.xml.rels"
-        with z.open(rels_path) as f:
+        with z.open("xl/_rels/workbook.xml.rels") as f:
             rels = ET.parse(f).getroot()
         rns = "{http://schemas.openxmlformats.org/package/2006/relationships}"
         rid_to_file = {r.get("Id"): r.get("Target") for r in rels.iter(f"{rns}Relationship")}
@@ -104,7 +105,6 @@ def read_sheet(xlsx_path: Path, sheet_name: str):
         if not sheet_file.startswith("xl/"):
             sheet_file = "xl/" + sheet_file.lstrip("/")
 
-        # Shared strings
         strings = []
         try:
             with z.open("xl/sharedStrings.xml") as f:
@@ -126,15 +126,41 @@ def read_sheet(xlsx_path: Path, sheet_name: str):
             return "".join(tt.text or "" for tt in is_el.iter(f"{NS}t")) if is_el is not None else None
         return c.findtext(f"{NS}v")
 
-    rows = []
+    # Passo 1: ler todas as linhas brutas (letter → valor)
+    raw_rows = []
     for row in tree.getroot().iter(f"{NS}row"):
         cells = {}
         for c in row.iter(f"{NS}c"):
             col = re.match(r"[A-Z]+", c.get("r")).group(0)
             cells[col] = cv(c)
         if cells:
-            rows.append(cells)
-    return rows
+            raw_rows.append(cells)
+
+    if not raw_rows:
+        return []
+
+    # Passo 2: primeira linha = header. Constrói mapa letter → nome.
+    header = raw_rows[0]
+    letter_to_name = {letter: (name or "").strip() for letter, name in header.items() if name}
+    if not letter_to_name:
+        return []
+
+    # Passo 3: remapear cada linha por nome de coluna
+    out = []
+    for raw in raw_rows[1:]:
+        out.append({letter_to_name[letter]: val for letter, val in raw.items() if letter in letter_to_name})
+    return out
+
+
+# Colunas esperadas (por nome, tolerante à posição na planilha)
+COL_PEDIDO_DET_ID = "PedidoDetalheId"
+COL_DATA_BRASILIA = "DataCriacaoBrasilia"
+COL_PDV_APELIDO   = "PDV APELIDO"
+COL_CATEGORIA     = "Categoria"
+COL_PRODUTO       = "Produto"
+COL_QUANTIDADE    = "Quantidade"
+COL_VALOR_PRODUTO = "ValorProduto"   # preço unitário do cardápio
+COL_EQUIPAMENTO   = "Equipamento"
 
 
 def normalizar_produto(nome: str) -> str:
@@ -170,10 +196,10 @@ def processar(xlsx_files: list[Path]):
             rows = read_sheet(xlsx, aba)
             if not rows:
                 continue
-            print(f"   Aba {aba}: {len(rows) - 1} linhas")
-            for r in rows[1:]:
+            print(f"   Aba {aba}: {len(rows)} linhas (sem header)")
+            for r in rows:
                 total_linhas += 1
-                pedido_det_id = (r.get("M") or "").strip()  # PedidoDetalheId (único por item)
+                pedido_det_id = (r.get(COL_PEDIDO_DET_ID) or "").strip()
                 if not pedido_det_id:
                     continue
                 if pedido_det_id in ids_vistos:
@@ -181,22 +207,21 @@ def processar(xlsx_files: list[Path]):
                     continue
                 ids_vistos.add(pedido_det_id)
 
-                data_iso = (r.get("I") or "")[:10]  # DataCriacaoBrasilia → YYYY-MM-DD
+                data_iso = (r.get(COL_DATA_BRASILIA) or "")[:10]  # YYYY-MM-DD
                 if not data_iso or "2026" not in data_iso:
                     continue
 
-                pdv = (r.get("F") or "").strip()
-                cat = (r.get("S") or "").strip()
-                produto = normalizar_produto(r.get("Q"))
-                try: qtd = float(r.get("N") or 0)
+                pdv = (r.get(COL_PDV_APELIDO) or "").strip()
+                cat = (r.get(COL_CATEGORIA) or "").strip()
+                produto = normalizar_produto(r.get(COL_PRODUTO))
+                try: qtd = float(r.get(COL_QUANTIDADE) or 0)
                 except: qtd = 0
-                # col O = ValorProduto = preço unitário do cardápio.
-                # col D = ValorPedido (total da linha) existe na aba BAR mas vem
-                # como #VALUE! na aba AMBULANTE. Calculamos qtd × unit pra ser
-                # consistente entre ambas.
-                try: unit = float(r.get("O") or 0)
+                # ValorProduto = preço unitário do cardápio. O total da linha
+                # (qtd × unit) é calculado aqui pois a coluna "ValorPedido"
+                # vem como #VALUE! na aba AMBULANTE.
+                try: unit = float(r.get(COL_VALOR_PRODUTO) or 0)
                 except: unit = 0
-                terminal = (r.get("U") or "").strip()
+                terminal = (r.get(COL_EQUIPAMENTO) or "").strip()
 
                 if qtd <= 0 or not produto:
                     continue
