@@ -195,7 +195,8 @@ def categoria_eh_bebida(cat: str) -> bool:
 
 # Sessão do evento: 17h do dia X → 08h do dia X+1.
 # Chave da sessão = data de INÍCIO (dia X). Retorna None se fora da janela.
-SESSOES_VALIDAS = {"2026-04-17", "2026-04-18"}
+# O set de sessões válidas é mutável — cada evento define o seu em main().
+SESSOES_VALIDAS: set = set()
 
 def sessao_de(datetime_str):
     """Dado 'YYYY-MM-DD HH:MM:SS...', retorna a chave da sessão ou None."""
@@ -214,6 +215,29 @@ def sessao_de(datetime_str):
         return None  # 08-16h: fora de sessão (gray window)
     key = sess.isoformat()
     return key if key in SESSOES_VALIDAS else None
+
+
+# =============================================================================
+# Eventos
+# =============================================================================
+# Cada evento tem: id (URL-safe), nome (display), sessões válidas (YYYY-MM-DD)
+# e uma pasta com os xlsx. Pastas ficam em PLANILHAS_DIR/<pasta>/.
+# Fallback: se a pasta do evento padrão não existir, usa xlsx soltos em
+# PLANILHAS_DIR (compat com instalação atual de Caçapava).
+EVENTOS_CONFIG: dict[str, dict] = {
+    "cacapava-2026": {
+        "nome": "Rodeio de Caçapava 2026",
+        "sessoes": {"2026-04-17", "2026-04-18"},
+        "pasta": "cacapava-2026",
+    },
+    "branca-paulista-2026": {
+        "nome": "Rodeio de Branca Paulista 2026",
+        "sessoes": {"2026-05-22", "2026-05-23"},  # placeholder — ajustar quando tiver planilha
+        "pasta": "branca-paulista-2026",
+    },
+}
+
+EVENTO_PADRAO = "cacapava-2026"
 
 
 # =============================================================================
@@ -297,30 +321,20 @@ def processar(xlsx_files: list[Path]):
                     operacao = "AMBULANTES"
                     grupo = "BEBIDAS AMBULANTES"
 
-                # Operações de alimentação: captura TUDO (comida + bebida).
-                # Isolado em ALIMENTACAO_POR_DATA — zero impacto nas outras abas.
+                # Escopo da aba Alimentação: SÓ BEBIDAS vendidas em pontos de alimentação.
+                # - Categorias de comida: descartadas (comida não entra no relatório).
+                # - Bebidas em op de bar: fluxo normal (ops_por_data).
+                # - Bebidas em op de alimentação (COMIDA TROPEIRA, NOVA ERA): vão pra
+                #   alimentacao_por_data isoladamente.
+                if not categoria_eh_bebida(cat):
+                    total_nao_bebida += 1
+                    continue
+
                 if operacao in OPERACOES_ALIMENTACAO:
                     ali = alimentacao_por_data[data_iso][operacao][produto]
                     ali["qtd"] += qtd
                     ali["valor"] += valor
                     ali["categoria"] = cat
-                    continue
-
-                # Demais operações: bebida entra no relatório principal.
-                # Comida vendida em PDVs de bar (ex: BUFFET PRIME em CAMAROTE CORP/
-                # INTENSE) é capturada em Alimentação sob uma "operação sintética"
-                # = nome da categoria — pra aparecer na consulta sem impactar as
-                # demais abas.
-                if not categoria_eh_bebida(cat):
-                    total_nao_bebida += 1
-                    # Ignora categorias vazias/NULL (lixo) — não vão pra Alimentação
-                    cat_limpa = cat.strip() if cat else ""
-                    if cat_limpa and cat_limpa.upper() not in {"NULL", "NONE", ""}:
-                        op_synth = cat_limpa  # ex: "BUFFET PRIME"
-                        ali = alimentacao_por_data[data_iso][op_synth][produto]
-                        ali["qtd"] += qtd
-                        ali["valor"] += valor
-                        ali["categoria"] = cat_limpa
                     continue
 
                 bucket = ops_por_data[data_iso][operacao][produto]
@@ -536,30 +550,24 @@ def _sub_const(html, nome, valor):
     return re.sub(pattern, lambda m: novo, html, count=1, flags=re.DOTALL)
 
 
-def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out):
+def injetar_no_html(eventos_out: dict):
+    """Injeta um único `const EVENTOS = {...}` no HTML, substituindo o placeholder.
+
+    Cada chave de eventos_out é um eventoId. Cada valor é um dict com:
+      nome, sessoes, data, dpd, ops, amb, pedidos, pedidos_bar, pedidos_amb,
+      vendas_hora, vendas_min, vendas_min_op_prod, terminais_min, alimentacao
+    """
     html = HTML_PATH.read_text(encoding="utf-8")
 
-    # DATA (lista, começa com [)
-    novo = f"const DATA = {json.dumps(data_list, ensure_ascii=False)};"
-    html = re.sub(r"const DATA = \[.*?\];", lambda m: novo, html, count=1, flags=re.DOTALL)
-
-    # DADOS_POR_DATA (meta tag)
-    html = re.sub(
-        r"<meta name=\"dados-por-data\" content='[^']+'",
-        lambda m: f"<meta name=\"dados-por-data\" content='{json.dumps(dpd)}'",
-        html, count=1,
-    )
-
-    html = _sub_const(html, "OPS_POR_DATA", json.dumps(ops_out, ensure_ascii=False))
-    html = _sub_const(html, "AMBULANTES_POR_DATA", json.dumps(amb_out, ensure_ascii=False))
-    html = _sub_const(html, "PEDIDOS_POR_DATA", json.dumps(pedidos_out))
-    html = _sub_const(html, "PEDIDOS_BAR_POR_DATA", json.dumps(pedidos_bar_out))
-    html = _sub_const(html, "PEDIDOS_AMB_POR_DATA", json.dumps(pedidos_amb_out))
-    html = _sub_const(html, "VENDAS_HORA_POR_SESSAO", json.dumps(vendas_hora_out))
-    html = _sub_const(html, "VENDAS_MIN_POR_SESSAO", json.dumps(vendas_min_out))
-    html = _sub_const(html, "VENDAS_MIN_OP_PROD_POR_SESSAO", json.dumps(vendas_min_op_prod_out, ensure_ascii=False))
-    html = _sub_const(html, "TERMINAIS_MIN_POR_SESSAO", json.dumps(terminais_por_min_out))
-    html = _sub_const(html, "ALIMENTACAO_POR_DATA", json.dumps(alimentacao_out, ensure_ascii=False))
+    payload = json.dumps(eventos_out, ensure_ascii=False)
+    novo = f"const EVENTOS = {payload};"
+    # Substitui o placeholder (qualquer conteúdo entre `const EVENTOS = ` e `;`)
+    pattern = r"const EVENTOS = \{.*?\};"
+    if re.search(pattern, html, flags=re.DOTALL):
+        html = re.sub(pattern, lambda m: novo, html, count=1, flags=re.DOTALL)
+    else:
+        print("⚠️  placeholder `const EVENTOS = {};` não encontrado — adicione em index.html")
+        return
 
     HTML_PATH.write_text(html, encoding="utf-8")
 
@@ -567,24 +575,73 @@ def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_o
 # =============================================================================
 # Main
 # =============================================================================
+def _evento_vazio(nome: str, sessoes: list) -> dict:
+    """Estrutura de evento sem dados (placeholder até a planilha chegar)."""
+    return {
+        "nome": nome,
+        "sessoes": sorted(sessoes),
+        "data": [],
+        "dpd": {},
+        "ops": {},
+        "amb": {},
+        "pedidos": {},
+        "pedidos_bar": {},
+        "pedidos_amb": {},
+        "vendas_hora": {},
+        "vendas_min": {},
+        "vendas_min_op_prod": {},
+        "terminais_min": {},
+        "alimentacao": {},
+    }
+
+
 def main():
     PLANILHAS_DIR.mkdir(parents=True, exist_ok=True)
-    xlsx_files = sorted(PLANILHAS_DIR.glob("*.xlsx"))
-    if not xlsx_files:
-        # Fallback: tenta achar no Downloads
-        fallback = Path("/Users/thiagomonteiro/Downloads/Lista_transacao_Cacapava.xlsx")
-        if fallback.exists():
-            xlsx_files = [fallback]
-    if not xlsx_files:
-        print("❌ Nenhum xlsx encontrado em", PLANILHAS_DIR)
-        sys.exit(1)
+    global SESSOES_VALIDAS
 
-    data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out = processar(xlsx_files)
-    injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out)
-    print(f"   Pedidos únicos:      {sum(pedidos_out.values())} ({pedidos_out})")
-    print(f"   Pedidos BAR:         {sum(pedidos_bar_out.values())} ({pedidos_bar_out})")
-    print(f"   Pedidos AMB:         {sum(pedidos_amb_out.values())} ({pedidos_amb_out})")
-    print(f"\n✅ HTML atualizado com {len(data_list)} produtos, {sum(len(v) for v in ops_out.values())} linhas OPS")
+    eventos_out = {}
+    for evt_id, cfg in EVENTOS_CONFIG.items():
+        pasta = PLANILHAS_DIR / cfg["pasta"]
+        xlsx_files = sorted(pasta.glob("*.xlsx")) if pasta.exists() else []
+
+        # Fallback pro evento padrão: se a pasta específica não existe, procura
+        # xlsx soltos em PLANILHAS_DIR (compat com instalação pré-multi-evento)
+        if not xlsx_files and evt_id == EVENTO_PADRAO:
+            xlsx_files = sorted(PLANILHAS_DIR.glob("*.xlsx"))
+
+        if not xlsx_files:
+            print(f"⏭️  {evt_id}: sem planilhas em {pasta} — evento fica como placeholder vazio")
+            eventos_out[evt_id] = _evento_vazio(cfg["nome"], cfg["sessoes"])
+            continue
+
+        print(f"\n🎪 Processando evento: {cfg['nome']} ({evt_id})")
+        SESSOES_VALIDAS = set(cfg["sessoes"])
+        data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out = processar(xlsx_files)
+        print(f"   Pedidos únicos:      {sum(pedidos_out.values())} ({pedidos_out})")
+        print(f"   Pedidos BAR:         {sum(pedidos_bar_out.values())} ({pedidos_bar_out})")
+        print(f"   Pedidos AMB:         {sum(pedidos_amb_out.values())} ({pedidos_amb_out})")
+        print(f"   Produtos:            {len(data_list)}  · OPS: {sum(len(v) for v in ops_out.values())} linhas")
+        eventos_out[evt_id] = {
+            "nome": cfg["nome"],
+            "sessoes": sorted(cfg["sessoes"]),
+            "data": data_list,
+            "dpd": dpd,
+            "ops": ops_out,
+            "amb": amb_out,
+            "pedidos": pedidos_out,
+            "pedidos_bar": pedidos_bar_out,
+            "pedidos_amb": pedidos_amb_out,
+            "vendas_hora": vendas_hora_out,
+            "vendas_min": vendas_min_out,
+            "vendas_min_op_prod": vendas_min_op_prod_out,
+            "terminais_min": terminais_por_min_out,
+            "alimentacao": alimentacao_out,
+        }
+
+    injetar_no_html(eventos_out)
+    ativos = [eid for eid, e in eventos_out.items() if e["data"]]
+    vazios = [eid for eid, e in eventos_out.items() if not e["data"]]
+    print(f"\n✅ HTML atualizado. Eventos com dados: {ativos or '—'}. Placeholders: {vazios or '—'}")
 
 
 if __name__ == "__main__":

@@ -7,6 +7,22 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.3.0] — 2026-04-20
+
+### Added
+- **Multi-evento**: suporte a múltiplos eventos no mesmo deploy. O cabeçalho agora tem um `<select>` que troca entre Rodeio de Caçapava 2026 e Rodeio de Branca Paulista 2026. Trocar evento re-renderiza todas as abas automaticamente.
+- **Estrutura `EVENTOS`** única no HTML contendo `{nome, sessoes, data, ops, amb, pedidos*, vendas*, alimentacao}` por evento. Substitui os ~14 consts top-level anteriores por `let`s reatribuídos via `hidratarEvento()`.
+- **`EVENTOS_CONFIG`** no `build-data.py` — adicionar evento novo = adicionar entrada + subpasta em `hops-planilhas/<evento-id>/`.
+
+### Changed
+- **Aba Alimentação**: volta a mostrar **apenas bebidas** vendidas em pontos de alimentação (comida foi removida do escopo). Pontos só-comida permanecem listados com "sem bebidas vendidas".
+- **Build-data.py** roda o pipeline uma vez por evento; evento sem planilha fica como placeholder vazio.
+
+### Fixed
+- **Pareto 80/20 na aba Ambulantes**: limpa corretamente o chart ao trocar pra evento sem dados (antes ficava stale).
+
+---
+
 ## [1.2.0] — 2026-04-20
 
 ### Added
