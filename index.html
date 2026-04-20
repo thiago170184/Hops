@@ -923,6 +923,26 @@
   /* Aba Cardápio — tabela de conferência de produtos × operações */
   /* === CARDÁPIO — lista de cards === */
   .cardapio-wrap {
+    display: flex; flex-direction: column; gap: 22px;
+  }
+  .cd-categoria {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .cd-cat-hdr {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px; padding: 0 4px;
+    border-bottom: 2px solid var(--divider); padding-bottom: 8px;
+  }
+  .cd-cat-nome {
+    font-size: 13px; font-weight: 900; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--ink);
+  }
+  .cd-cat-stats {
+    font-size: 11px; font-weight: 600; color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .cd-cat-stats b { color: var(--ink); font-weight: 800; }
+  .cardapio-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 12px;
   }
@@ -1375,7 +1395,7 @@
     .cardapio-header .search-wrap { min-width: 100% !important; }
     .cardapio-header .select-wrap { width: 100%; }
     .cardapio-header .select-wrap select { width: 100%; }
-    .cardapio-wrap { grid-template-columns: 1fr; }
+    .cardapio-grid { grid-template-columns: 1fr; }
     .cd-card { padding: 12px 14px; }
     .cd-head .cd-prod { font-size: 13px; }
     .cd-head .cd-preco .v { font-size: 15px; }
@@ -2672,12 +2692,11 @@
     });
 
     if (filtrados.length === 0) {
-      tbody.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--ink-muted);font-style:italic">Nenhum produto encontrado.</div>`;
+      tbody.innerHTML = `<div style="text-align:center;padding:40px;color:var(--ink-muted);font-style:italic">Nenhum produto encontrado.</div>`;
       return;
     }
 
-    tbody.innerHTML = filtrados.map(p => {
-      // Moda dos preços como "preço oficial" (ignora outliers)
+    function renderCard(p) {
       const modaPreco = p.precosUnicos.length === 1
         ? p.precosUnicos[0]
         : (() => {
@@ -2728,7 +2747,31 @@
           </div>
         </div>
       `;
-    }).join('');
+    }
+
+    // Agrupa por categoria e ordena grupos por faturamento decrescente
+    const porCategoria = {};
+    for (const p of filtrados) {
+      const cat = p.categoria || 'OUTROS';
+      if (!porCategoria[cat]) porCategoria[cat] = { produtos: [], valor: 0, qtd: 0 };
+      porCategoria[cat].produtos.push(p);
+      porCategoria[cat].valor += p.valor;
+      porCategoria[cat].qtd += p.qtd;
+    }
+    const grupos = Object.entries(porCategoria)
+      .sort((a, b) => b[1].valor - a[1].valor);
+
+    tbody.innerHTML = grupos.map(([cat, g]) => `
+      <section class="cd-categoria">
+        <header class="cd-cat-hdr">
+          <span class="cd-cat-nome">${escapeHtml(cat)}</span>
+          <span class="cd-cat-stats"><b>${g.produtos.length}</b> produtos · <b>${fmtInt(g.qtd)}</b> un · <b>${fmtBRL(g.valor)}</b></span>
+        </header>
+        <div class="cardapio-grid">
+          ${g.produtos.map(renderCard).join('')}
+        </div>
+      </section>
+    `).join('');
   }
 
   const elCdBusca = document.getElementById('cd-busca');
