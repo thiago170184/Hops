@@ -217,6 +217,8 @@ def processar(xlsx_files: list[Path]):
     pedidos_por_data = defaultdict(set)  # sessão → set de PedidoId únicos (total)
     pedidos_bar_por_data = defaultdict(set)  # sessão → PedidoIds da aba BAR
     pedidos_amb_por_data = defaultdict(set)  # sessão → PedidoIds da aba AMBULANTE
+    # timeline por hora: sessão → hora_str → {"bar": 0.0, "amb": 0.0}
+    vendas_hora = defaultdict(lambda: defaultdict(lambda: {"bar": 0.0, "amb": 0.0}))
 
     total_linhas = 0
     total_dup = 0
@@ -239,9 +241,11 @@ def processar(xlsx_files: list[Path]):
                     continue
                 ids_vistos.add(pedido_det_id)
 
-                data_iso = sessao_de(r.get(COL_DATA_BRASILIA) or "")
+                datetime_str = r.get(COL_DATA_BRASILIA) or ""
+                data_iso = sessao_de(datetime_str)
                 if not data_iso:
                     continue
+                hora_str = datetime_str[11:13] if len(datetime_str) >= 13 else None
 
                 pedido_id = (r.get(COL_PEDIDO_ID) or "").strip()
                 pdv = (r.get(COL_PDV_APELIDO) or "").strip()
@@ -287,6 +291,14 @@ def processar(xlsx_files: list[Path]):
                         pedidos_bar_por_data[data_iso].add(pedido_id)
                     else:
                         pedidos_amb_por_data[data_iso].add(pedido_id)
+
+                # Timeline por hora (valor R$)
+                if hora_str is not None:
+                    bucket_h = vendas_hora[data_iso][hora_str]
+                    if aba == "BAR":
+                        bucket_h["bar"] += valor
+                    else:
+                        bucket_h["amb"] += valor
 
                 # Cardápio
                 key = (produto, grupo)
@@ -385,7 +397,12 @@ def processar(xlsx_files: list[Path]):
     pedidos_out = {d: len(ids) for d, ids in pedidos_por_data.items()}
     pedidos_bar_out = {d: len(ids) for d, ids in pedidos_bar_por_data.items()}
     pedidos_amb_out = {d: len(ids) for d, ids in pedidos_amb_por_data.items()}
-    return data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out
+    # Timeline: arredonda valores
+    vendas_hora_out = {
+        sess: {h: {"bar": round(v["bar"], 2), "amb": round(v["amb"], 2)} for h, v in horas.items()}
+        for sess, horas in vendas_hora.items()
+    }
+    return data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out
 
 
 # =============================================================================
@@ -400,7 +417,7 @@ def _sub_const(html, nome, valor):
     return re.sub(pattern, lambda m: novo, html, count=1, flags=re.DOTALL)
 
 
-def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out):
+def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out):
     html = HTML_PATH.read_text(encoding="utf-8")
 
     # DATA (lista, começa com [)
@@ -419,6 +436,7 @@ def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_o
     html = _sub_const(html, "PEDIDOS_POR_DATA", json.dumps(pedidos_out))
     html = _sub_const(html, "PEDIDOS_BAR_POR_DATA", json.dumps(pedidos_bar_out))
     html = _sub_const(html, "PEDIDOS_AMB_POR_DATA", json.dumps(pedidos_amb_out))
+    html = _sub_const(html, "VENDAS_HORA_POR_SESSAO", json.dumps(vendas_hora_out))
 
     HTML_PATH.write_text(html, encoding="utf-8")
 
@@ -438,8 +456,8 @@ def main():
         print("❌ Nenhum xlsx encontrado em", PLANILHAS_DIR)
         sys.exit(1)
 
-    data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out = processar(xlsx_files)
-    injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out)
+    data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out = processar(xlsx_files)
+    injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out)
     print(f"   Pedidos únicos:      {sum(pedidos_out.values())} ({pedidos_out})")
     print(f"   Pedidos BAR:         {sum(pedidos_bar_out.values())} ({pedidos_bar_out})")
     print(f"   Pedidos AMB:         {sum(pedidos_amb_out.values())} ({pedidos_amb_out})")
