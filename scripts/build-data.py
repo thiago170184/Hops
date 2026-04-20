@@ -65,6 +65,9 @@ MAPA_PDV_OPERACAO = {
     "WHISKERIA 1":                "WHISKERIA",
     "WHISKERIA 2":                "WHISKERIA",
     "CAIXA MÓVEL WHISKERIA":      "WHISKERIA",
+    # Alimentação: consolida 2 PDVs do Espeto Secretário numa única operação
+    "ESPETO SECRETARIO CAIXA":    "ESPETO SECRETARIO",
+    "ESPETO SECRETARIO GARCOM":   "ESPETO SECRETARIO",
 }
 
 # Categorias consideradas BEBIDAS (relatório foca em bebidas)
@@ -76,9 +79,19 @@ CATEGORIAS_BEBIDAS = {
     "WHISKERIA - BEBIDAS LATA",
     "COMIDA TROPEIRA - BEBIDAS",
 }
-# Operações de COMIDA que vendem algumas bebidas mas devem ser excluídas
-# do relatório de bebidas (o foco é operações primariamente de bebida).
-OPERACOES_EXCLUIDAS = {"COMIDA TROPEIRA", "NOVA ERA"}
+# Operações de ALIMENTAÇÃO. São excluídas do relatório principal de bebidas
+# (OPS_POR_DATA, DATA, Vendas, etc.). Se venderem alguma bebida, ela é
+# capturada separadamente em ALIMENTACAO_POR_DATA (aba Alimentação — só consulta).
+# Operações SEM bebidas aparecem na aba Alimentação como "sem bebidas vendidas".
+OPERACOES_ALIMENTACAO = {
+    # Vendem bebidas misturadas:
+    "COMIDA TROPEIRA", "NOVA ERA",
+    # Só comida (sem bebidas):
+    "DOCE MACIEL", "ESPETINHO JALES", "ESPETO SECRETARIO",
+    "HOT DOG JUCA", "KREP SUIÇO", "PASTEL FERNANDO", "PIZZA CONE RAUL",
+}
+# Alias mantido para compatibilidade com código existente
+OPERACOES_EXCLUIDAS = OPERACOES_ALIMENTACAO
 
 # BUFFET PRIME é comida (camarote) — excluído do relatório. Mantemos o PDV
 # mapeado em MAPA_PDV_OPERACAO apenas para que a operação apareça quando
@@ -221,6 +234,16 @@ def processar(xlsx_files: list[Path]):
     vendas_hora = defaultdict(lambda: defaultdict(lambda: {"bar": 0.0, "amb": 0.0, "bar_qtd": 0, "amb_qtd": 0}))
     # vendas por minuto (para calcular janela de pico com precisão): sessão → minuto_abs (0 = 17:00) → valor total
     vendas_min = defaultdict(lambda: defaultdict(float))
+    # Ritmo de Vendas: sessão → op → produto → minuto_abs → qtd (pra calc de antes/pico/pós dinâmico)
+    vendas_min_op_prod = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(float))))
+    # Terminais únicos por minuto: sessão → minuto_abs → set(idx_terminal)
+    # Terminais enumerados em `terminal_idx` pra reduzir payload do JSON.
+    terminal_idx: dict[str, int] = {}
+    terminais_por_min = defaultdict(lambda: defaultdict(set))
+    # Alimentação (bebidas vendidas em pontos de alimentação): bucket ISOLADO.
+    # Esses valores NÃO entram em ops_por_data, all_produtos, vendas_min, etc.
+    # São usados APENAS pela aba Alimentação (visual/consulta).
+    alimentacao_por_data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "valor": 0.0, "categoria": ""})))
 
     total_linhas = 0
     total_dup = 0
@@ -264,9 +287,6 @@ def processar(xlsx_files: list[Path]):
 
                 if qtd <= 0 or not produto:
                     continue
-                if not categoria_eh_bebida(cat):
-                    total_nao_bebida += 1
-                    continue
 
                 valor = round(qtd * unit, 2)  # total real da linha
 
@@ -277,7 +297,30 @@ def processar(xlsx_files: list[Path]):
                     operacao = "AMBULANTES"
                     grupo = "BEBIDAS AMBULANTES"
 
-                if operacao in OPERACOES_EXCLUIDAS:
+                # Operações de alimentação: captura TUDO (comida + bebida).
+                # Isolado em ALIMENTACAO_POR_DATA — zero impacto nas outras abas.
+                if operacao in OPERACOES_ALIMENTACAO:
+                    ali = alimentacao_por_data[data_iso][operacao][produto]
+                    ali["qtd"] += qtd
+                    ali["valor"] += valor
+                    ali["categoria"] = cat
+                    continue
+
+                # Demais operações: bebida entra no relatório principal.
+                # Comida vendida em PDVs de bar (ex: BUFFET PRIME em CAMAROTE CORP/
+                # INTENSE) é capturada em Alimentação sob uma "operação sintética"
+                # = nome da categoria — pra aparecer na consulta sem impactar as
+                # demais abas.
+                if not categoria_eh_bebida(cat):
+                    total_nao_bebida += 1
+                    # Ignora categorias vazias/NULL (lixo) — não vão pra Alimentação
+                    cat_limpa = cat.strip() if cat else ""
+                    if cat_limpa and cat_limpa.upper() not in {"NULL", "NONE", ""}:
+                        op_synth = cat_limpa  # ex: "BUFFET PRIME"
+                        ali = alimentacao_por_data[data_iso][op_synth][produto]
+                        ali["qtd"] += qtd
+                        ali["valor"] += valor
+                        ali["categoria"] = cat_limpa
                     continue
 
                 bucket = ops_por_data[data_iso][operacao][produto]
@@ -314,6 +357,13 @@ def processar(xlsx_files: list[Path]):
                             else:
                                 mm_abs = (hh + 7) * 60 + mm
                             vendas_min[data_iso][mm_abs] += valor
+                            # Ritmo de Vendas: qtd por (op × produto × minuto)
+                            vendas_min_op_prod[data_iso][operacao][produto][mm_abs] += qtd
+                            # Terminais ativos por minuto (enumerados)
+                            if terminal:
+                                if terminal not in terminal_idx:
+                                    terminal_idx[terminal] = len(terminal_idx)
+                                terminais_por_min[data_iso][mm_abs].add(terminal_idx[terminal])
                         except ValueError:
                             pass
 
@@ -431,7 +481,47 @@ def processar(xlsx_files: list[Path]):
         sess: {str(m): round(v, 2) for m, v in mins.items() if v > 0}
         for sess, mins in vendas_min.items()
     }
-    return data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out
+    # Ritmo de Vendas: qtd por (sessão × op × produto × minuto) — só minutos com venda
+    vendas_min_op_prod_out = {}
+    for sess, por_op in vendas_min_op_prod.items():
+        vendas_min_op_prod_out[sess] = {}
+        for op, por_prod in por_op.items():
+            vendas_min_op_prod_out[sess][op] = {}
+            for prod, por_min in por_prod.items():
+                vendas_min_op_prod_out[sess][op][prod] = {
+                    str(m): (int(q) if q == int(q) else round(q, 2))
+                    for m, q in por_min.items() if q > 0
+                }
+    # Terminais por minuto (enumerados): sessão → minuto → [idx_terminal, ...]
+    terminais_por_min_out = {
+        sess: {str(m): sorted(list(s)) for m, s in mins.items()}
+        for sess, mins in terminais_por_min.items()
+    }
+    # Pré-registra TODAS as operações de alimentação conhecidas em cada sessão ativa,
+    # mesmo as que não venderam bebidas — pra aparecerem na aba Alimentação como
+    # "sem bebidas vendidas" (visibilidade operacional completa).
+    sessoes_ativas = set(alimentacao_por_data.keys()) | set(ops_por_data.keys())
+    for sess in sessoes_ativas:
+        for op in OPERACOES_ALIMENTACAO:
+            if op not in alimentacao_por_data[sess]:
+                alimentacao_por_data[sess][op]  # força criação via defaultdict (dict vazio)
+
+    # Alimentação: bebidas vendidas em pontos de alimentação (bucket isolado)
+    alimentacao_out = {}
+    for data_iso, por_op in alimentacao_por_data.items():
+        alimentacao_out[data_iso] = {}
+        for op, prods in por_op.items():
+            arr = []
+            for prod, d in sorted(prods.items()):
+                q = d["qtd"]
+                arr.append({
+                    "produto": prod,
+                    "categoria": d["categoria"],
+                    "qtd": int(q) if q == int(q) else q,
+                    "valor": round(d["valor"], 2),
+                })
+            alimentacao_out[data_iso][op] = arr
+    return data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out
 
 
 # =============================================================================
@@ -446,7 +536,7 @@ def _sub_const(html, nome, valor):
     return re.sub(pattern, lambda m: novo, html, count=1, flags=re.DOTALL)
 
 
-def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out):
+def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out):
     html = HTML_PATH.read_text(encoding="utf-8")
 
     # DATA (lista, começa com [)
@@ -467,6 +557,9 @@ def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_o
     html = _sub_const(html, "PEDIDOS_AMB_POR_DATA", json.dumps(pedidos_amb_out))
     html = _sub_const(html, "VENDAS_HORA_POR_SESSAO", json.dumps(vendas_hora_out))
     html = _sub_const(html, "VENDAS_MIN_POR_SESSAO", json.dumps(vendas_min_out))
+    html = _sub_const(html, "VENDAS_MIN_OP_PROD_POR_SESSAO", json.dumps(vendas_min_op_prod_out, ensure_ascii=False))
+    html = _sub_const(html, "TERMINAIS_MIN_POR_SESSAO", json.dumps(terminais_por_min_out))
+    html = _sub_const(html, "ALIMENTACAO_POR_DATA", json.dumps(alimentacao_out, ensure_ascii=False))
 
     HTML_PATH.write_text(html, encoding="utf-8")
 
@@ -486,8 +579,8 @@ def main():
         print("❌ Nenhum xlsx encontrado em", PLANILHAS_DIR)
         sys.exit(1)
 
-    data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out = processar(xlsx_files)
-    injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out)
+    data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out = processar(xlsx_files)
+    injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out)
     print(f"   Pedidos únicos:      {sum(pedidos_out.values())} ({pedidos_out})")
     print(f"   Pedidos BAR:         {sum(pedidos_bar_out.values())} ({pedidos_bar_out})")
     print(f"   Pedidos AMB:         {sum(pedidos_amb_out.values())} ({pedidos_amb_out})")

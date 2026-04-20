@@ -7,6 +7,30 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.2.0] — 2026-04-20
+
+### Added
+- **Nova aba "Ritmo de Vendas"**: análise de velocidade de venda por (operação × produto) nas 3 fases do evento — Antes do pico · Durante o pico · Pós pico — mais a média geral. Valores em unidades por 3 min pra dimensionamento de equipe e estoque. Pico detectado dinamicamente (reusa a janela do Timeline).
+- **Tabela de fases no topo** do Ritmo: Início/Fim · Duração · Unidades · % das vendas · Faturamento · Terminais únicos.
+- **Cabeçalho do card por operação** mostra totais das 3 fases (Antes · Pico · Pós) + Unidades total.
+- **Coluna Qtd** (unidades totais) na tabela do Ritmo — contextualiza valores baixos tipo `0,X`.
+- **Nova aba "Alimentação"**: vendas (comida + bebida) dos pontos de alimentação, em bucket 100% isolado. **Não impacta faturamento das outras abas**. Inclui BUFFET PRIME vendido através dos camarotes + 9 PDVs de comida (Comida Tropeira, Nova Era, Doce Maciel, Espetinho Jales, Espeto Secretario, Hot Dog Juca, Krep Suíço, Pastel Fernando, Pizza Cone Raul).
+- **Hero consolidado** na aba Alimentação (Faturamento · Operações · Unidades), estilo gradient âmbar.
+- **Headers responsivos** da tabela Ritmo em mobile: nomes abreviados (Antes · Pico · Pós · Média) pra não sobrepor.
+
+### Changed
+- **Dropdown "Operação" da aba Vendas** agora é populado dinamicamente a partir dos dados reais (antes tinha lista hardcoded com operações fantasma). Exclui automaticamente as operações de alimentação.
+- **Aba de tabs**: distribuída igualmente na largura do cabeçalho (`flex: 1 1 0` em cada tab) — ficou harmônico com 8 abas.
+- **Rebrand no rodapé**: "HOPS — Head of Operations" (antes "Operações e Serviços para Eventos").
+- **Pipeline `build-data.py`**: captura isolada em `ALIMENTACAO_POR_DATA` (sem impacto em DATA/OPS_POR_DATA); consolidação de PDVs ESPETO SECRETARIO CAIXA/GARCOM numa única operação; filtro NULL pra evitar bucket-lixo.
+
+### Data
+- `VENDAS_MIN_OP_PROD_POR_SESSAO` — qtd por (sessão × op × produto × minuto) pra cálculo dinâmico do Ritmo.
+- `TERMINAIS_MIN_POR_SESSAO` — terminais enumerados por minuto (pra contagem de únicos por fase).
+- `ALIMENTACAO_POR_DATA` — bucket isolado (R$ 162.198 · 7.228 un nas duas sessões de Caçapava 2026).
+
+---
+
 ## [1.1.1] — 2026-04-20
 
 ### Added
