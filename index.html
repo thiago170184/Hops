@@ -1628,6 +1628,15 @@
 
   <!-- AMBULANTES -->
   <div class="tab-panel" id="tab-ambulantes">
+    <div class="filtros">
+      <div class="data-grp">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span class="lbl">Sessão</span>
+        <div class="dt-wrap md-wrap" data-scope="amb"><button type="button" class="md-btn filtro-data-el"><span class="md-label">—</span><span class="md-caret">▾</span></button><div class="md-panel" hidden></div></div>
+      </div>
+      <div style="flex:1"></div>
+    </div>
+
     <section class="amb-hero">
       <div class="amb-hero-main">
         <div class="amb-hero-icon">🎒</div>
@@ -1668,10 +1677,6 @@
       </section>
     </div>
 
-    <section class="amb-section">
-      <h3>🥇 Destaques da ponta <small>maior e menor venda</small></h3>
-      <div class="amb-topbot" id="amb-topbot"></div>
-    </section>
   </div>
 
 
@@ -2263,7 +2268,6 @@
   function renderAmbulantes() {
     const amb = ambulantesAtivos();
     const kpisEl = document.getElementById('amb-kpis');
-    const tbEl = document.getElementById('amb-topbot');
     const podioEl = document.getElementById('amb-podio');
     const rankEl = document.getElementById('amb-rank');
     const topProdEl = document.getElementById('amb-topprod');
@@ -2272,7 +2276,7 @@
     const heroQtde = document.getElementById('amb-hero-qtde');
     const heroUn = document.getElementById('amb-hero-un');
     const heroSub = document.getElementById('amb-hero-sub');
-    if (!kpisEl || !tbEl) return;
+    if (!kpisEl) return;
 
     const labelSessoes = labelDatasAtivas();
     if (heroSub) heroSub.textContent = `— ${labelSessoes.toLowerCase()}`;
@@ -2286,7 +2290,6 @@
       if (rankEl) rankEl.innerHTML = '<div class="top-empty">Sem dados.</div>';
       if (topProdEl) topProdEl.innerHTML = '<div class="top-empty">Sem dados.</div>';
       if (sessEl) sessEl.innerHTML = '<div class="top-empty">Sem dados.</div>';
-      tbEl.innerHTML = '<div class="top-empty" style="grid-column:1/-1">Sem dados de ambulantes para a sessão selecionada.</div>';
       return;
     }
 
@@ -2414,44 +2417,6 @@
       sessEl.innerHTML = cards || '<div class="top-empty">Sem dados.</div>';
     }
 
-    // === TOP / MENOR (cards existentes) ===
-    const top = amb[0];
-    const bot = amb[amb.length - 1];
-    function renderProdList(prods) {
-      return prods.map(p => `
-        <li class="amb-pline">
-          <span class="amb-pnome">${escapeHtml(p.produto)}</span>
-          <span class="amb-pqtd">${p.qtd.toLocaleString('pt-BR')} un</span>
-          <span class="amb-pval">${fmtBRL(p.valor)}</span>
-        </li>
-      `).join('');
-    }
-    tbEl.innerHTML = `
-      <div class="amb-card top">
-        <div class="amb-card-hd">
-          <div class="amb-medal">🥇</div>
-          <div class="amb-info">
-            <div class="tag">Top ambulante</div>
-            <div class="term">${escapeHtml(top.terminal)}</div>
-            <div class="metrics"><b>${top.qtd.toLocaleString('pt-BR')}</b> unidades · <b>${top.produtos.length}</b> produtos distintos</div>
-          </div>
-          <div class="amb-vlr">${fmtBRL(top.valor)}</div>
-        </div>
-        <ul class="amb-prods">${renderProdList(top.produtos)}</ul>
-      </div>
-      <div class="amb-card bot">
-        <div class="amb-card-hd">
-          <div class="amb-medal">📉</div>
-          <div class="amb-info">
-            <div class="tag">Menor venda</div>
-            <div class="term">${escapeHtml(bot.terminal)}</div>
-            <div class="metrics"><b>${bot.qtd.toLocaleString('pt-BR')}</b> unidades · <b>${bot.produtos.length}</b> produtos distintos</div>
-          </div>
-          <div class="amb-vlr">${fmtBRL(bot.valor)}</div>
-        </div>
-        <ul class="amb-prods">${renderProdList(bot.produtos)}</ul>
-      </div>
-    `;
   }
 
   function renderCardapio() {
