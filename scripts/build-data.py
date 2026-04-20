@@ -217,8 +217,8 @@ def processar(xlsx_files: list[Path]):
     pedidos_por_data = defaultdict(set)  # sessão → set de PedidoId únicos (total)
     pedidos_bar_por_data = defaultdict(set)  # sessão → PedidoIds da aba BAR
     pedidos_amb_por_data = defaultdict(set)  # sessão → PedidoIds da aba AMBULANTE
-    # timeline por hora: sessão → hora_str → {"bar": 0.0, "amb": 0.0}
-    vendas_hora = defaultdict(lambda: defaultdict(lambda: {"bar": 0.0, "amb": 0.0}))
+    # timeline por hora: sessão → hora_str → {"bar", "amb": valor R$; "bar_qtd", "amb_qtd": unidades}
+    vendas_hora = defaultdict(lambda: defaultdict(lambda: {"bar": 0.0, "amb": 0.0, "bar_qtd": 0, "amb_qtd": 0}))
 
     total_linhas = 0
     total_dup = 0
@@ -292,13 +292,15 @@ def processar(xlsx_files: list[Path]):
                     else:
                         pedidos_amb_por_data[data_iso].add(pedido_id)
 
-                # Timeline por hora (valor R$)
+                # Timeline por hora (valor R$ e quantidade)
                 if hora_str is not None:
                     bucket_h = vendas_hora[data_iso][hora_str]
                     if aba == "BAR":
                         bucket_h["bar"] += valor
+                        bucket_h["bar_qtd"] += qtd
                     else:
                         bucket_h["amb"] += valor
+                        bucket_h["amb_qtd"] += qtd
 
                 # Cardápio
                 key = (produto, grupo)
@@ -399,7 +401,14 @@ def processar(xlsx_files: list[Path]):
     pedidos_amb_out = {d: len(ids) for d, ids in pedidos_amb_por_data.items()}
     # Timeline: arredonda valores
     vendas_hora_out = {
-        sess: {h: {"bar": round(v["bar"], 2), "amb": round(v["amb"], 2)} for h, v in horas.items()}
+        sess: {
+            h: {
+                "bar": round(v["bar"], 2),
+                "amb": round(v["amb"], 2),
+                "bar_qtd": int(v["bar_qtd"]) if v["bar_qtd"] == int(v["bar_qtd"]) else v["bar_qtd"],
+                "amb_qtd": int(v["amb_qtd"]) if v["amb_qtd"] == int(v["amb_qtd"]) else v["amb_qtd"],
+            } for h, v in horas.items()
+        }
         for sess, horas in vendas_hora.items()
     }
     return data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out
