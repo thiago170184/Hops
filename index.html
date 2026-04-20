@@ -771,6 +771,85 @@
   }
   .amb-podio-prod b { color: var(--ink); }
 
+  /* Pareto 80/20 */
+  .amb-pareto-insight {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 18px;
+    align-items: center; padding: 16px 20px; margin-bottom: 14px;
+    background: linear-gradient(135deg, #ecfdf5 0%, #fff 60%, #fef9c3 100%);
+    border: 1px solid #a7f3d0; border-radius: 12px;
+  }
+  .amb-pareto-insight .icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: #fff; border: 1px solid #a7f3d0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+  }
+  .amb-pareto-insight .headline {
+    font-size: 15px; font-weight: 800; color: #065f46; letter-spacing: -0.01em;
+  }
+  .amb-pareto-insight .headline b { color: #047857; font-size: 17px; }
+  .amb-pareto-insight .sub { font-size: 11.5px; color: var(--ink-muted); margin-top: 3px; font-weight: 500; }
+  .amb-pareto-insight .big {
+    font-size: 30px; font-weight: 900; color: #047857; font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em; line-height: 1;
+  }
+  .amb-pareto-insight .big-k {
+    font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+    color: #047857; margin-top: 4px;
+  }
+  .amb-pareto-insight .big-wrap { text-align: right; }
+
+  .amb-pareto-chart { width: 100%; position: relative; }
+  .amb-pareto-chart svg { width: 100%; height: 340px; display: block; overflow: visible; }
+  .amb-pareto-chart .pareto-grid { stroke: #eef2f7; stroke-width: 1; }
+  .amb-pareto-chart .pareto-ax { fill: var(--ink-subtle); font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .amb-pareto-chart .pareto-ax.x { text-anchor: middle; }
+  .amb-pareto-chart .pareto-ax.y-left { text-anchor: end; }
+  .amb-pareto-chart .pareto-ax.y-right { text-anchor: start; fill: #047857; }
+  .amb-pareto-chart .pareto-bar-vf { fill: #10b981; }
+  .amb-pareto-chart .pareto-bar-tm { fill: #cbd5e1; }
+  .amb-pareto-chart .pareto-line { fill: none; stroke: #047857; stroke-width: 2.4; }
+  .amb-pareto-chart .pareto-line-dot { fill: #047857; stroke: #fff; stroke-width: 1.5; }
+  .amb-pareto-chart .pareto-80 {
+    stroke: #dc2626; stroke-width: 1.5; stroke-dasharray: 6 4; fill: none;
+  }
+  .amb-pareto-chart .pareto-80-label {
+    fill: #dc2626; font-size: 10.5px; font-weight: 800; text-anchor: start;
+  }
+  .amb-pareto-chart .pareto-vital-zone {
+    fill: #10b981; opacity: 0.08;
+  }
+  .amb-pareto-legend {
+    display: flex; flex-wrap: wrap; gap: 18px; padding: 12px 0 0;
+    margin-top: 8px; border-top: 1px solid var(--divider);
+    font-size: 11.5px; font-weight: 600; color: var(--ink-muted);
+  }
+  .amb-pareto-legend .item { display: flex; align-items: center; gap: 8px; }
+  .amb-pareto-legend .sw { width: 14px; height: 10px; border-radius: 2px; }
+  .amb-pareto-legend .sw-vf { background: #10b981; }
+  .amb-pareto-legend .sw-tm { background: #cbd5e1; }
+  .amb-pareto-legend .sw-line { background: #047857; height: 2px; }
+  .amb-pareto-legend .sw-80 { background: transparent; border-top: 2px dashed #dc2626; height: 2px; border-radius: 0; }
+
+  .amb-pareto-details { margin-top: 14px; }
+  .amb-pareto-details summary {
+    cursor: pointer; font-size: 11.5px; font-weight: 700; color: var(--ink-muted);
+    padding: 8px 12px; background: #f8fafc; border-radius: 8px; user-select: none;
+    border: 1px solid var(--border);
+  }
+  .amb-pareto-details[open] summary { margin-bottom: 12px; }
+  .amb-pareto-details summary:hover { background: #f1f5f9; }
+
+  .amb-rank-row.is-vf { border-left: 3px solid #10b981; background: #f0fdf4; }
+  .amb-rank-row.is-vf .amb-rank-pos { color: #047857; }
+  .amb-rank-row.is-vf .amb-rank-bar { background: linear-gradient(90deg, #10b981 0%, #047857 100%); }
+
+  @media (max-width: 768px) {
+    .amb-pareto-insight { grid-template-columns: auto 1fr; }
+    .amb-pareto-insight .big-wrap { grid-column: 1 / -1; text-align: left; }
+    .amb-pareto-chart svg { height: 260px; }
+  }
+
   /* Ranking completo */
   .amb-rank {
     display: flex; flex-direction: column; gap: 6px;
@@ -1661,9 +1740,20 @@
       <div class="amb-podio" id="amb-podio"></div>
     </section>
 
-    <section class="amb-section">
-      <h3>📊 Ranking completo <small id="amb-rank-sub">todos os ambulantes · ordenados por faturamento</small></h3>
-      <div class="amb-rank" id="amb-rank"></div>
+    <section class="amb-section amb-pareto-section">
+      <h3>📈 Pareto 80/20 <small id="amb-pareto-sub">vital few vs trivial many</small></h3>
+      <div class="amb-pareto-insight" id="amb-pareto-insight"></div>
+      <div class="amb-pareto-chart" id="amb-pareto-chart"></div>
+      <div class="amb-pareto-legend">
+        <span class="item"><span class="sw sw-vf"></span>Vital few — geram 80% da receita</span>
+        <span class="item"><span class="sw sw-tm"></span>Trivial many — geram os 20% restantes</span>
+        <span class="item"><span class="sw sw-line"></span>Acumulado (%)</span>
+        <span class="item"><span class="sw sw-80"></span>Linha 80%</span>
+      </div>
+      <details class="amb-pareto-details">
+        <summary>Ver lista completa ordenada</summary>
+        <div class="amb-rank" id="amb-rank"></div>
+      </details>
     </section>
 
     <div class="amb-grid-2">
@@ -2347,13 +2437,133 @@
       }).join('');
     }
 
-    // === RANKING COMPLETO ===
+    // === PARETO 80/20 ===
+    const totalAll = amb.reduce((s, a) => s + a.valor, 0);
+    let acc = 0;
+    const paretoRows = amb.map(a => {
+      acc += a.valor;
+      return { ...a, acc, accPct: totalAll > 0 ? (acc / totalAll * 100) : 0 };
+    });
+    // Vital few = quantidade mínima que cobre 80% da receita
+    let vfCount = 0;
+    for (let i = 0; i < paretoRows.length; i++) {
+      if (paretoRows[i].accPct >= 80) { vfCount = i + 1; break; }
+    }
+    if (vfCount === 0) vfCount = paretoRows.length;
+    const vfPct = amb.length > 0 ? (vfCount / amb.length * 100) : 0;
+    const vfReceita = vfCount > 0 ? paretoRows[vfCount - 1].accPct : 0;
+
+    // Insight card
+    const insightEl = document.getElementById('amb-pareto-insight');
+    if (insightEl) {
+      insightEl.innerHTML = `
+        <div class="icon">💡</div>
+        <div>
+          <div class="headline"><b>${vfCount} ambulantes</b> (${vfPct.toFixed(1).replace('.', ',')}% do total) geram <b>${vfReceita.toFixed(1).replace('.', ',')}%</b> da receita</div>
+          <div class="sub">Princípio 80/20 de Pareto · concentração de faturamento em poucos terminais</div>
+        </div>
+        <div class="big-wrap">
+          <div class="big">${vfPct.toFixed(0)}%</div>
+          <div class="big-k">dos ambulantes = 80% das vendas</div>
+        </div>
+      `;
+    }
+
+    // Gráfico Pareto SVG
+    const chartEl = document.getElementById('amb-pareto-chart');
+    if (chartEl && paretoRows.length > 0) {
+      const W = chartEl.clientWidth || 900;
+      const H = 340;
+      const padL = 62, padR = 62, padT = 20, padB = 48;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+      const n = paretoRows.length;
+      const barW = plotW / n * 0.72;
+      const barGap = plotW / n * 0.28;
+      const maxBar = Math.max(...paretoRows.map(r => r.valor), 1);
+      function niceCeil(v) {
+        if (v <= 0) return 1;
+        const pot = Math.pow(10, Math.floor(Math.log10(v)));
+        const nn = v / pot;
+        const c = nn <= 1 ? 1 : nn <= 2 ? 2 : nn <= 5 ? 5 : 10;
+        return c * pot;
+      }
+      const yMaxBar = niceCeil(maxBar * 1.05);
+      const xBar = i => padL + (plotW * (i + 0.5) / n);
+      const yBar = v => padT + plotH - (plotH * (v / yMaxBar));
+      const yPct = p => padT + plotH - (plotH * (p / 100));
+
+      // Grid + eixo Y esquerdo (R$)
+      const yTicks = 5;
+      let grid = '';
+      for (let i = 0; i <= yTicks; i++) {
+        const v = yMaxBar * (i / yTicks);
+        const yy = yBar(v);
+        grid += `<line class="pareto-grid" x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}"/>`;
+        grid += `<text class="pareto-ax y-left" x="${padL - 8}" y="${yy + 3}">${fmtBRLcompact(v)}</text>`;
+      }
+      // Eixo Y direito (%)
+      for (let i = 0; i <= yTicks; i++) {
+        const p = 100 * (i / yTicks);
+        grid += `<text class="pareto-ax y-right" x="${W - padR + 8}" y="${yPct(p) + 3}">${p.toFixed(0)}%</text>`;
+      }
+
+      // Zona vital few (retângulo verde translúcido)
+      const zoneX = padL;
+      const zoneW = (plotW * vfCount / n);
+      const zone = `<rect class="pareto-vital-zone" x="${zoneX}" y="${padT}" width="${zoneW}" height="${plotH}"/>`;
+
+      // Barras
+      const bars = paretoRows.map((r, i) => {
+        const h = plotH - (yBar(r.valor) - padT);
+        const cls = (i < vfCount) ? 'pareto-bar-vf' : 'pareto-bar-tm';
+        return `<rect class="${cls}" x="${xBar(i) - barW / 2}" y="${yBar(r.valor)}" width="${barW}" height="${h}" rx="2"/>`;
+      }).join('');
+
+      // Linha acumulada (%)
+      const linePath = paretoRows.map((r, i) => `${i === 0 ? 'M' : 'L'}${xBar(i)},${yPct(r.accPct)}`).join(' ');
+      const lineDots = paretoRows.map((r, i) => `<circle class="pareto-line-dot" cx="${xBar(i)}" cy="${yPct(r.accPct)}" r="3"/>`).join('');
+
+      // Linha 80%
+      const y80 = yPct(80);
+      const line80 = `<line class="pareto-80" x1="${padL}" y1="${y80}" x2="${W - padR}" y2="${y80}"/>
+                     <text class="pareto-80-label" x="${padL + 6}" y="${y80 - 6}">80%</text>`;
+
+      // Labels X (mostra só a cada k para caber)
+      const step = Math.ceil(n / 12);
+      let xLabels = '';
+      paretoRows.forEach((r, i) => {
+        if (i % step !== 0 && i !== n - 1 && i !== vfCount - 1) return;
+        xLabels += `<text class="pareto-ax x" x="${xBar(i)}" y="${H - padB + 16}">${i + 1}</text>`;
+      });
+      // Label "vital few" no topo da zona
+      if (vfCount > 0 && vfCount < n) {
+        xLabels += `<text class="pareto-ax x" x="${padL + zoneW / 2}" y="${padT - 6}" style="fill:#047857;font-weight:800;font-size:11px">★ Vital few (${vfCount})</text>`;
+      }
+
+      chartEl.innerHTML = `
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+          ${zone}
+          ${grid}
+          ${bars}
+          ${line80}
+          <path class="pareto-line" d="${linePath}"/>
+          ${lineDots}
+          ${xLabels}
+        </svg>
+      `;
+    }
+    const paretoSub = document.getElementById('amb-pareto-sub');
+    if (paretoSub) paretoSub.textContent = `${amb.length} ambulantes · ordenados por faturamento decrescente`;
+
+    // Lista completa (dentro do details), com marcação vital few
     if (rankEl) {
       const maxV = Math.max(...amb.map(a => a.valor), 1);
       rankEl.innerHTML = amb.map((a, i) => {
         const pct = (a.valor / maxV) * 100;
+        const vfCls = i < vfCount ? ' is-vf' : '';
         return `
-          <div class="amb-rank-row">
+          <div class="amb-rank-row${vfCls}">
             <span class="amb-rank-pos">${i + 1}º</span>
             <span class="amb-rank-term">${escapeHtml(a.terminal)}</span>
             <div class="amb-rank-bar-wrap">
@@ -2367,8 +2577,6 @@
           </div>
         `;
       }).join('');
-      const sub = document.getElementById('amb-rank-sub');
-      if (sub) sub.textContent = `${amb.length} ambulantes · ordenados por faturamento`;
     }
 
     // === TOP PRODUTOS (agregado entre todos os ambulantes) ===
@@ -2543,6 +2751,8 @@
     if (name === 'produtos') renderProdutos();
     if (name === 'operacoes') renderOperacoes();
     if (name === 'cardapio') renderCardapio();
+    if (name === 'ambulantes') renderAmbulantes();
+    if (name === 'dashboard') renderTimeline();
   };
 
   function fmtBRLSimples(n) { return fmtBRL(n); }
