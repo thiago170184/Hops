@@ -17,9 +17,9 @@
     --bebidas:     #1e3a8a;
     --bebidas-bg:  #e6eaf7;
     --bebidas-mid: #c5d0ea;
-    --ambulantes:      #475a88;
-    --ambulantes-bg:   #eef0fb;
-    --ambulantes-mid:  #c8d0e4;
+    --ambulantes:      #dc2626;
+    --ambulantes-bg:   #fee2e2;
+    --ambulantes-mid:  #fca5a5;
     --alim:       #b91c1c;
     --alim-bg:    #fdecec;
     --alim-mid:   #f5c2c2;
@@ -426,7 +426,7 @@
   }
   .grupo-bebidas .grupo-header { background: linear-gradient(135deg, #e6eaf7 0%, #f5f7fb 100%); border-bottom-color: var(--bebidas-mid); }
   .grupo-alimentacao .grupo-header { background: linear-gradient(135deg, #fdecec 0%, #fef7f7 100%); border-bottom-color: var(--alim-mid); }
-  .grupo-ambulantes .grupo-header { background: linear-gradient(135deg, #e0f2fe 0%, #f0faff 100%); border-bottom-color: var(--ambulantes-mid); }
+  .grupo-ambulantes .grupo-header { background: linear-gradient(135deg, var(--ambulantes-bg) 0%, #fff5f5 100%); border-bottom-color: var(--ambulantes-mid); }
   .grupo-ambulantes .grupo-icon { background: #fff; color: var(--ambulantes); }
   .grupo-ambulantes .grupo-info .t { color: var(--ambulantes); }
   .grupo-ambulantes .grupo-stats .stat.big .v { color: var(--ambulantes); }
@@ -1623,7 +1623,7 @@
         <div class="s"><span class="rg-bebidas-pct">0%</span> do total</div>
       </div>
       <div class="rg-item">
-        <div class="l"><span class="dot" style="background:#0369a1"></span>Ambulantes</div>
+        <div class="l"><span class="dot" style="background:var(--ambulantes)"></span>Ambulantes</div>
         <div class="v rg-ambulantes">R$ 0,00</div>
         <div class="s"><span class="rg-ambulantes-pct">0%</span> do total</div>
       </div>
@@ -1694,7 +1694,7 @@
         <div class="s"><span class="rg-bebidas-pct">0%</span> do total</div>
       </div>
       <div class="rg-item">
-        <div class="l"><span class="dot" style="background:#0369a1"></span>Ambulantes</div>
+        <div class="l"><span class="dot" style="background:var(--ambulantes)"></span>Ambulantes</div>
         <div class="v rg-ambulantes">R$ 0,00</div>
         <div class="s"><span class="rg-ambulantes-pct">0%</span> do total</div>
       </div>
