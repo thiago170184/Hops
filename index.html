@@ -134,6 +134,86 @@
   }
   .dash-card h3 small { font-size: 10.5px; font-weight: 500; color: var(--ink-subtle); letter-spacing: 0; text-transform: none; }
 
+  /* Botão info (abre modal) */
+  .info-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #fef9c3; color: #854d0e;
+    border: 1px solid #fde68a; border-radius: 999px;
+    padding: 5px 12px; cursor: pointer;
+    font-family: inherit; font-size: 10.5px; font-weight: 800;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    transition: all 120ms ease;
+  }
+  .info-btn:hover { background: #fef08a; border-color: #facc15; color: #713f12; }
+  .info-btn svg { flex-shrink: 0; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(15,23,42,0.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; padding: 20px; backdrop-filter: blur(3px);
+    animation: fadeIn 180ms ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: #fff; border-radius: 16px;
+    max-width: 560px; width: 100%;
+    max-height: 90vh; overflow-y: auto;
+    padding: 28px 32px; position: relative;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+    animation: slideUp 220ms ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .modal-close {
+    position: absolute; top: 14px; right: 16px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #f1f5f9; border: none; color: var(--ink-muted);
+    font-size: 22px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 120ms ease; line-height: 1;
+  }
+  .modal-close:hover { background: #e2e8f0; color: var(--ink); }
+  .modal-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: linear-gradient(135deg, #fef9c3 0%, #facc15 100%);
+    border: 1px solid #fde68a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px; margin-bottom: 14px;
+  }
+  .modal h2 {
+    margin: 0 0 6px; font-size: 22px; font-weight: 900;
+    letter-spacing: -0.01em; color: var(--ink);
+  }
+  .modal-lead {
+    margin: 0 0 20px; font-size: 14px; color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .modal-section { margin-bottom: 18px; }
+  .modal-section h4 {
+    margin: 0 0 8px; font-size: 11px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-muted);
+  }
+  .modal-section ul, .modal-section ol {
+    margin: 0; padding-left: 20px;
+    font-size: 13px; color: var(--ink-soft); line-height: 1.65;
+  }
+  .modal-section li { margin-bottom: 4px; }
+  .modal-section b { color: var(--ink); font-weight: 700; }
+  .modal-tip {
+    background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%);
+    border: 1px solid #fde68a; border-radius: 10px;
+    padding: 12px 14px; font-size: 12.5px; color: #713f12;
+    line-height: 1.55;
+  }
+  .modal-tip b { color: #854d0e; font-weight: 800; }
+  @media (max-width: 480px) {
+    .modal { padding: 22px 20px; }
+    .modal h2 { font-size: 19px; }
+  }
+
   /* Gráfico de barras horizontal */
   .bar-chart { display: flex; flex-direction: column; gap: 10px; }
   .bar-row { display: flex; align-items: center; gap: 10px; font-size: 12.5px; }
@@ -267,7 +347,10 @@
   .timeline-legend .item { display: flex; align-items: center; gap: 8px; }
   .timeline-legend .dot { width: 12px; height: 12px; border-radius: 3px; }
   @media (max-width: 768px) {
-    .timeline-wrap svg { height: 220px; }
+    .timeline-wrap svg { height: 240px; }
+    .timeline-wrap .peak-label { font-size: 13px; }
+    .timeline-wrap .peak-sub { font-size: 11px; }
+    .timeline-wrap .axis-label { font-size: 11px; }
   }
   .bar-track { flex: 1; height: 10px; background: #f3f4f6; border-radius: 999px; overflow: hidden; }
   .bar-fill { height: 100%; border-radius: 999px; transition: width 400ms ease; }
@@ -1600,13 +1683,52 @@
     </div>
 
     <div class="dash-card dash-timeline">
-      <h3>Timeline de vendas <small>por hora · bares vs ambulantes</small></h3>
+      <h3>
+        <span>Timeline de vendas <small>por hora · bares vs ambulantes</small></span>
+        <button type="button" class="info-btn" id="btn-info-pico" aria-label="Sobre a janela de pico" title="O que é a janela de pico?">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Janela de pico</span>
+        </button>
+      </h3>
       <div id="chart-timeline" class="timeline-wrap">
         <div class="top-empty">Sem dados.</div>
       </div>
       <div class="timeline-legend">
         <div class="item"><span class="dot" style="background:var(--bebidas)"></span>Bares</div>
         <div class="item"><span class="dot" style="background:var(--ambulantes)"></span>Ambulantes</div>
+        <div class="item"><span class="dot" style="background:#facc15"></span>Janela de pico</div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-pico" hidden>
+      <div class="modal" role="dialog" aria-labelledby="modal-pico-title">
+        <button type="button" class="modal-close" aria-label="Fechar" id="btn-close-pico">×</button>
+        <div class="modal-icon">⚡</div>
+        <h2 id="modal-pico-title">Janela de pico</h2>
+        <p class="modal-lead">O período em que o evento concentra a maior parte das vendas — quando a operação está realmente "no fogo".</p>
+
+        <div class="modal-section">
+          <h4>Como é calculada?</h4>
+          <ol>
+            <li>Identificamos a <b>hora de maior faturamento</b> (argmax) somando bares + ambulantes.</li>
+            <li>Definimos um <b>patamar de 50%</b> do pico como corte.</li>
+            <li>A partir do argmax, expandimos para os lados enquanto as horas vizinhas permanecem <b>acima desse patamar</b>.</li>
+            <li>O intervalo contíguo resultante é a <b>janela de pico</b>.</li>
+          </ol>
+        </div>
+
+        <div class="modal-section">
+          <h4>O que as linhas indicam?</h4>
+          <ul>
+            <li><b>Linha vertical esquerda:</b> início da janela — quando as vendas cruzam o patamar subindo.</li>
+            <li><b>Linha vertical direita:</b> fim da janela — quando as vendas voltam ao mesmo patamar descendo.</li>
+            <li><b>Área amarela:</b> horas dentro do pico.</li>
+          </ul>
+        </div>
+
+        <div class="modal-tip">
+          💡 Na prática: se o pico vai das <b>22h às 00h</b> e concentra 60% das vendas, aquele é o momento em que equipe, estoque e caixa precisam estar no limite.
+        </div>
       </div>
     </div>
 
@@ -2445,7 +2567,7 @@
     }).join('');
 
     wrap.innerHTML = `
-      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" width="100%" height="${H}">
         ${grid}
         ${peakSvg}
         ${bars}
@@ -2925,6 +3047,30 @@
     if (name === 'ambulantes') renderAmbulantes();
     if (name === 'dashboard') renderTimeline();
   };
+
+  // Re-renderiza charts em resize (debounced) para recalcular largura SVG
+  let __resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(__resizeTimer);
+    __resizeTimer = setTimeout(() => {
+      if (typeof renderTimeline === 'function') renderTimeline();
+      if (typeof renderAmbulantes === 'function') renderAmbulantes();
+    }, 180);
+  });
+
+  // Modal "Janela de pico"
+  (function setupModalPico() {
+    const btn = document.getElementById('btn-info-pico');
+    const modal = document.getElementById('modal-pico');
+    const close = document.getElementById('btn-close-pico');
+    if (!btn || !modal || !close) return;
+    const open = () => { modal.hidden = false; document.body.style.overflow = 'hidden'; };
+    const hide = () => { modal.hidden = true; document.body.style.overflow = ''; };
+    btn.addEventListener('click', open);
+    close.addEventListener('click', hide);
+    modal.addEventListener('click', e => { if (e.target === modal) hide(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) hide(); });
+  })();
 
   function fmtBRLSimples(n) { return fmtBRL(n); }
 
