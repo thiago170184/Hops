@@ -219,6 +219,8 @@ def processar(xlsx_files: list[Path]):
     pedidos_amb_por_data = defaultdict(set)  # sessão → PedidoIds da aba AMBULANTE
     # timeline por hora: sessão → hora_str → {"bar", "amb": valor R$; "bar_qtd", "amb_qtd": unidades}
     vendas_hora = defaultdict(lambda: defaultdict(lambda: {"bar": 0.0, "amb": 0.0, "bar_qtd": 0, "amb_qtd": 0}))
+    # vendas por minuto (para calcular janela de pico com precisão): sessão → minuto_abs (0 = 17:00) → valor total
+    vendas_min = defaultdict(lambda: defaultdict(float))
 
     total_linhas = 0
     total_dup = 0
@@ -301,6 +303,19 @@ def processar(xlsx_files: list[Path]):
                     else:
                         bucket_h["amb"] += valor
                         bucket_h["amb_qtd"] += qtd
+                    # Minuto absoluto desde 17:00 da sessão (mm_abs)
+                    # hh >= 17 → (hh - 17)*60 + mm;  hh < 8 → (hh + 7)*60 + mm
+                    if len(datetime_str) >= 16:
+                        try:
+                            hh = int(datetime_str[11:13])
+                            mm = int(datetime_str[14:16])
+                            if hh >= 17:
+                                mm_abs = (hh - 17) * 60 + mm
+                            else:
+                                mm_abs = (hh + 7) * 60 + mm
+                            vendas_min[data_iso][mm_abs] += valor
+                        except ValueError:
+                            pass
 
                 # Cardápio
                 key = (produto, grupo)
@@ -411,7 +426,12 @@ def processar(xlsx_files: list[Path]):
         }
         for sess, horas in vendas_hora.items()
     }
-    return data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out
+    # Por minuto (só minutos com venda > 0): usado pra calcular janela de pico
+    vendas_min_out = {
+        sess: {str(m): round(v, 2) for m, v in mins.items() if v > 0}
+        for sess, mins in vendas_min.items()
+    }
+    return data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out
 
 
 # =============================================================================
@@ -426,7 +446,7 @@ def _sub_const(html, nome, valor):
     return re.sub(pattern, lambda m: novo, html, count=1, flags=re.DOTALL)
 
 
-def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out):
+def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out):
     html = HTML_PATH.read_text(encoding="utf-8")
 
     # DATA (lista, começa com [)
@@ -446,6 +466,7 @@ def injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_o
     html = _sub_const(html, "PEDIDOS_BAR_POR_DATA", json.dumps(pedidos_bar_out))
     html = _sub_const(html, "PEDIDOS_AMB_POR_DATA", json.dumps(pedidos_amb_out))
     html = _sub_const(html, "VENDAS_HORA_POR_SESSAO", json.dumps(vendas_hora_out))
+    html = _sub_const(html, "VENDAS_MIN_POR_SESSAO", json.dumps(vendas_min_out))
 
     HTML_PATH.write_text(html, encoding="utf-8")
 
@@ -465,8 +486,8 @@ def main():
         print("❌ Nenhum xlsx encontrado em", PLANILHAS_DIR)
         sys.exit(1)
 
-    data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out = processar(xlsx_files)
-    injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out)
+    data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out = processar(xlsx_files)
+    injetar_no_html(data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out)
     print(f"   Pedidos únicos:      {sum(pedidos_out.values())} ({pedidos_out})")
     print(f"   Pedidos BAR:         {sum(pedidos_bar_out.values())} ({pedidos_bar_out})")
     print(f"   Pedidos AMB:         {sum(pedidos_amb_out.values())} ({pedidos_amb_out})")
