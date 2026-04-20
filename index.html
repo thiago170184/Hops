@@ -424,6 +424,8 @@
   .btn:hover { background: var(--soft); }
   .btn-primary { background: var(--navy); color: #fff; border-color: var(--navy); }
   .btn-primary:hover { background: var(--navy-2); }
+  .btn-exportar { background: #2563eb; color: #fff; border-color: #2563eb; }
+  .btn-exportar:hover { background: #1d4ed8; border-color: #1d4ed8; }
 
 
   /* Filtro de data (integrado no card de filtros) */
@@ -1566,6 +1568,7 @@
     .chev, .cat-chev { display: none; }
   }
 </style>
+<script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="container">
@@ -1887,6 +1890,7 @@
       </div>
       <button class="btn" type="button" onclick="expandirOps(true)">Expandir</button>
       <button class="btn" type="button" onclick="expandirOps(false)">Recolher</button>
+      <button class="btn btn-exportar" type="button" onclick="exportarOperacoes()">Exportar</button>
     </div>
 
     <div id="operacoes-container">
@@ -1993,7 +1997,7 @@
     <div class="cardapio-wrap" id="cd-tbody"></div>
   </div>
 
-  <div class="doc-footer">HOPS — Operações e Serviços para Eventos <span style="opacity:0.5;font-size:10px">· build 23:33:26</span></div>
+  <div class="doc-footer">HOPS — Operações e Serviços para Eventos <span style="opacity:0.5;font-size:10px">· v1.1.0 · build 23:33:26</span></div>
 </div>
 
 <script>
@@ -2380,11 +2384,28 @@
   function renderProdutos() {
     const tbody = document.getElementById('tbl-produtos-body');
     const termo = (document.getElementById('busca-prod').value || '').trim().toLowerCase();
-    // Clona e enriquece com total
-    const rows = DATA.map(p => {
-      const qtd = qtds.get(p.id) || 0;
-      return { ...p, qtd, total: qtd * p.preco };
-    }).filter(p => {
+    // Fonte: opsAtivas() — 1 linha por (operação, produto), respeitando filtro de sessão.
+    // Antes usava DATA (catálogo achatado por produto), o que colapsava 6 operações de bar em 1.
+    const ops = opsAtivas();
+    const rows = [];
+    let _id = 0;
+    for (const op of Object.keys(ops).sort()) {
+      const grupo = op === 'AMBULANTES' ? 'BEBIDAS AMBULANTES' : 'BEBIDAS';
+      for (const item of ops[op]) {
+        if (!item.qtd || item.qtd <= 0) continue;
+        rows.push({
+          id: _id++,
+          operacao: op,
+          nome: item.produto,
+          categoria: item.categoria || '',
+          grupo,
+          preco: item.preco || 0,
+          qtd: item.qtd,
+          total: item.valor,
+        });
+      }
+    }
+    const rowsFiltradas = rows.filter(p => {
       if (termo) {
         const hay = (p.nome + ' ' + p.categoria + ' ' + p.operacao + ' ' + p.grupo).toLowerCase();
         if (!hay.includes(termo)) return false;
@@ -2394,7 +2415,7 @@
 
     const mult = prodSortDir === 'asc' ? 1 : -1;
     const GRUPO_ORDER = { 'BEBIDAS': 1, 'ALIMENTAÇÃO': 2, 'OUTROS': 3 };
-    rows.sort((a, b) => {
+    rowsFiltradas.sort((a, b) => {
       const va = a[prodSortKey];
       const vb = b[prodSortKey];
       // Ordem customizada: Bebidas → Alimentação → Outros
@@ -2405,7 +2426,7 @@
       return String(va).localeCompare(String(vb), 'pt-BR') * mult;
     });
 
-    tbody.innerHTML = rows.map(p => {
+    tbody.innerHTML = rowsFiltradas.map(p => {
       const chipCls = p.grupo === 'BEBIDAS' ? 'chip-bebidas' : p.grupo === 'BEBIDAS AMBULANTES' ? 'chip-ambulantes' : p.grupo === 'ALIMENTAÇÃO' ? 'chip-alim' : 'chip-outros';
       const chipIcon = p.grupo === 'BEBIDAS' ? '🥤' : p.grupo === 'BEBIDAS AMBULANTES' ? '🎒' : p.grupo === 'ALIMENTAÇÃO' ? '🍽️' : '📋';
       return `
@@ -2422,8 +2443,8 @@
     }).join('');
 
     // Totais rodapé
-    const totQtd = rows.reduce((s, p) => s + p.qtd, 0);
-    const totVal = rows.reduce((s, p) => s + p.total, 0);
+    const totQtd = rowsFiltradas.reduce((s, p) => s + p.qtd, 0);
+    const totVal = rowsFiltradas.reduce((s, p) => s + p.total, 0);
     document.getElementById('tbl-tot-qtd').textContent = totQtd.toLocaleString('pt-BR');
     document.getElementById('tbl-tot-val').textContent = fmtBRL(totVal);
 
@@ -3203,6 +3224,56 @@
 
   function expandirOps(abrir) {
     document.querySelectorAll('.op-card').forEach(c => c.dataset.open = abrir ? 'true' : 'false');
+  }
+
+  function exportarOperacoes() {
+    if (typeof XLSX === 'undefined') {
+      alert('Biblioteca de exportação ainda carregando. Tente novamente em 2s.');
+      return;
+    }
+    const opsData = opsAtivas();
+    const termo = (document.getElementById('busca-ops')?.value || '').trim().toLowerCase();
+    const linhas = [];
+    for (const op of Object.keys(opsData).sort()) {
+      for (const p of opsData[op]) {
+        if (!p.qtd || p.qtd <= 0) continue;
+        if (termo && !p.produto.toLowerCase().includes(termo)) continue;
+        const qtde = p.qtd;
+        const valorUnit = p.preco || 0;
+        const valorTotal = Math.round(qtde * valorUnit * 100) / 100;
+        linhas.push({
+          'Operação': op,
+          'Produto': p.produto,
+          'Categoria': p.categoria || '',
+          'Qtde': qtde,
+          'Valor Unt': valorUnit,
+          'Valor': valorTotal,
+        });
+      }
+    }
+    if (linhas.length === 0) {
+      alert('Nada pra exportar com o filtro atual.');
+      return;
+    }
+    const ws = XLSX.utils.json_to_sheet(linhas);
+    ws['!cols'] = [{ wch: 22 }, { wch: 36 }, { wch: 18 }, { wch: 10 }, { wch: 12 }, { wch: 14 }];
+    // Formato numérico BR: Qtde inteiro, Valor Unt e Valor com 2 casas (9999,99 em Excel pt-BR)
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let R = 1; R <= range.e.r; R++) {
+      [3, 4, 5].forEach(C => {
+        const addr = XLSX.utils.encode_cell({ r: R, c: C });
+        const cell = ws[addr];
+        if (cell && cell.t === 'n') {
+          cell.z = C === 3 ? '0' : '0.00';
+        }
+      });
+    }
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Operações');
+    const sessoes = diasAtivos();
+    const sufixo = sessoes.length > 0 ? sessoes.map(s => s.replaceAll('-', '')).join('_') : 'todas';
+    const termoSufixo = termo ? '_' + termo.replace(/[^a-z0-9]/gi, '') : '';
+    XLSX.writeFile(wb, `operacoes_${sufixo}${termoSufixo}.xlsx`);
   }
 
   function aplicarBuscaOps() {
