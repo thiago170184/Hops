@@ -7,6 +7,13 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.1.1] — 2026-04-20
+
+### Added
+- **Badge de versão no canto superior direito do cabeçalho** — discreto, branco com 50% de opacidade.
+
+---
+
 ## [1.1.0] — 2026-04-20
 
 ### Fixed
