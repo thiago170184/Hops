@@ -7,6 +7,13 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.4.0] — 2026-04-22
+
+### Added
+- **Botão "Exportar" na aba Produtos**: gera XLSX com 4 colunas (Produto, Qtde, Valor Unit, Valor Total). Agrega por nome do produto somando qtd e total entre operações. Respeita o filtro de busca e o filtro de data ativo. Nome do arquivo `produtos_<sessoes>[_<busca>].xlsx`.
+
+---
+
 ## [1.3.0] — 2026-04-20
 
 ### Added
