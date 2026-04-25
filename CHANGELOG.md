@@ -7,6 +7,18 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.6.0] — 2026-04-25
+
+### Added
+- **Alimentação entra no Faturamento Total**: Dashboard ganhou 3 KPIs novos (`Alimentação · Faturamento`, `· Itens`, `· Ticket Médio`) ao lado de BAR e AMBULANTES. As bebidas vendidas em PDV de alimentação (categoria `eh_alimentacao` por evento) passam a somar no card destaque "Faturamento Total", junto com BAR + AMBULANTES. Antes ficavam isoladas na aba Alimentação como "só consulta".
+- **`pedidos_alim` no JSON dos eventos**: build-data.py agora coleta também `pedidos_alim_por_data` (set de PedidoIds únicos de bebidas em PDV de alimentação) e injeta em cada evento. Frontend usa para calcular ticket médio da nova linha de KPIs.
+
+### Changed
+- **Pcts dos KPIs recalculados sobre o novo total** (BAR + AMB + ALIM). `kpi-itens` e `kpi-total` passam a refletir os 3 grupos.
+- **Aba Alimentação**: aviso amarelo no topo deixou de dizer "esses valores NÃO entram no faturamento" — agora descreve a tela como detalhamento da linha de alimentação do Dashboard.
+
+---
+
 ## [1.5.3] — 2026-04-25
 
 ### Changed

@@ -319,6 +319,7 @@ def processar(xlsx_files: list[Path], cfg: dict):
     pedidos_por_data = defaultdict(set)  # sessão → set de PedidoId únicos (total)
     pedidos_bar_por_data = defaultdict(set)  # sessão → PedidoIds da aba BAR
     pedidos_amb_por_data = defaultdict(set)  # sessão → PedidoIds da aba AMBULANTE
+    pedidos_alim_por_data = defaultdict(set)  # sessão → PedidoIds de bebidas em PDV de alimentação
     # timeline por hora: sessão → hora_str → {"bar", "amb": valor R$; "bar_qtd", "amb_qtd": unidades}
     vendas_hora = defaultdict(lambda: defaultdict(lambda: {"bar": 0.0, "amb": 0.0, "bar_qtd": 0, "amb_qtd": 0}))
     # vendas por minuto (para calcular janela de pico com precisão): sessão → minuto_abs (0 = 17:00) → valor total
@@ -422,6 +423,8 @@ def processar(xlsx_files: list[Path], cfg: dict):
                     ali["qtd"] += qtd
                     ali["valor"] += valor
                     ali["categoria"] = cat
+                    if pedido_id:
+                        pedidos_alim_por_data[data_iso].add(pedido_id)
                     continue
 
                 bucket = ops_por_data[data_iso][operacao][produto]
@@ -567,6 +570,7 @@ def processar(xlsx_files: list[Path], cfg: dict):
     pedidos_out = {d: len(ids) for d, ids in pedidos_por_data.items()}
     pedidos_bar_out = {d: len(ids) for d, ids in pedidos_bar_por_data.items()}
     pedidos_amb_out = {d: len(ids) for d, ids in pedidos_amb_por_data.items()}
+    pedidos_alim_out = {d: len(ids) for d, ids in pedidos_alim_por_data.items()}
     # Timeline: arredonda valores
     vendas_hora_out = {
         sess: {
@@ -626,7 +630,7 @@ def processar(xlsx_files: list[Path], cfg: dict):
                     "valor": round(d["valor"], 2),
                 })
             alimentacao_out[data_iso][op] = arr
-    return data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out, ultima_atualizacao
+    return data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, pedidos_alim_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out, ultima_atualizacao
 
 
 # =============================================================================
@@ -679,6 +683,7 @@ def _evento_vazio(nome: str, sessoes: list) -> dict:
         "pedidos": {},
         "pedidos_bar": {},
         "pedidos_amb": {},
+        "pedidos_alim": {},
         "vendas_hora": {},
         "vendas_min": {},
         "vendas_min_op_prod": {},
@@ -708,10 +713,11 @@ def main():
 
         print(f"\n🎪 Processando evento: {cfg['nome']} ({evt_id})")
         SESSOES_VALIDAS = set(cfg["sessoes"])
-        data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out, ultima_atualizacao = processar(xlsx_files, cfg)
+        data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, pedidos_alim_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out, ultima_atualizacao = processar(xlsx_files, cfg)
         print(f"   Pedidos únicos:      {sum(pedidos_out.values())} ({pedidos_out})")
         print(f"   Pedidos BAR:         {sum(pedidos_bar_out.values())} ({pedidos_bar_out})")
         print(f"   Pedidos AMB:         {sum(pedidos_amb_out.values())} ({pedidos_amb_out})")
+        print(f"   Pedidos ALIM:        {sum(pedidos_alim_out.values())} ({pedidos_alim_out})")
         print(f"   Produtos:            {len(data_list)}  · OPS: {sum(len(v) for v in ops_out.values())} linhas")
         print(f"   Última transação:    {ultima_atualizacao}")
         # Sessões: união do que está na config (filtro) com o que apareceu nos
@@ -729,6 +735,7 @@ def main():
             "pedidos": pedidos_out,
             "pedidos_bar": pedidos_bar_out,
             "pedidos_amb": pedidos_amb_out,
+            "pedidos_alim": pedidos_alim_out,
             "vendas_hora": vendas_hora_out,
             "vendas_min": vendas_min_out,
             "vendas_min_op_prod": vendas_min_op_prod_out,
