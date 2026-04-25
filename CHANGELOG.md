@@ -7,6 +7,16 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.5.2] — 2026-04-25
+
+### Changed
+- **Data refresh — madrugada de 25/04 (Caçapava + Bragança)**: nova planilha `transacional.xlsx` ingerida em ambas as pastas (`cacapava-2026/` e `braganca-paulista-2026/`). Dedup global por `PedidoDetalheId` cortou 63.834 linhas em Caçapava e 14.597 em Bragança (sobreposição entre exports anterior e novo).
+  - **Caçapava** sessão 24/04: 7.237 → **10.924** pedidos (+3.687)  ·  total: 24.409 → **28.096**
+  - **Bragança** sessão 24/04: 5.433 → **9.518** pedidos (+4.085)
+  - Última transação: **25/04 04:24**
+
+---
+
 ## [1.5.1] — 2026-04-25
 
 ### Fixed
