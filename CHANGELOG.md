@@ -7,6 +7,16 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.5.3] — 2026-04-25
+
+### Changed
+- **Data refresh — manhã de 25/04 (Caçapava + Bragança)**: nova planilha `transacional.xlsx` ingerida (mesmo arquivo unificado em ambas as pastas). Captura transações entre ~04:24 e ~05:56 que faltavam no export anterior.
+  - **Caçapava** sessão 24/04: 10.924 → **11.036** pedidos (+112)  ·  total: 28.096 → **28.208**
+  - **Bragança** sessão 24/04: 9.518 → **9.659** pedidos (+141)
+  - Última transação: **25/04 05:56:55** (Caçapava) · **25/04 05:40:15** (Bragança)
+
+---
+
 ## [1.5.2] — 2026-04-25
 
 ### Changed
