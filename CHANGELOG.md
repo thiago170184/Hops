@@ -7,6 +7,13 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.5.1] — 2026-04-25
+
+### Fixed
+- **Frontend não listava sessões dos eventos**: ao mover `EVENTOS_CONFIG[evento].sessoes` para `set()` vazio (auto-descoberta), o JSON injetado em `index.html` saía com `sessoes: []` e o seletor de dia/sessão no frontend ficava vazio. Agora o build injeta a união entre `cfg["sessoes"]` (filtro opcional) e as sessões realmente presentes nos dados (`pedidos_out.keys()`) — sessões aparecem automaticamente conforme os dados forem chegando.
+
+---
+
 ## [1.5.0] — 2026-04-25
 
 ### Added

@@ -714,9 +714,13 @@ def main():
         print(f"   Pedidos AMB:         {sum(pedidos_amb_out.values())} ({pedidos_amb_out})")
         print(f"   Produtos:            {len(data_list)}  · OPS: {sum(len(v) for v in ops_out.values())} linhas")
         print(f"   Última transação:    {ultima_atualizacao}")
+        # Sessões: união do que está na config (filtro) com o que apareceu nos
+        # dados (auto-descoberta). Garante que ingestão incremental sem editar
+        # `sessoes` na config ainda liste os dias no frontend.
+        sessoes_descobertas = set(cfg["sessoes"]) | set(pedidos_out.keys())
         eventos_out[evt_id] = {
             "nome": cfg["nome"],
-            "sessoes": sorted(cfg["sessoes"]),
+            "sessoes": sorted(sessoes_descobertas),
             "ultima_atualizacao": ultima_atualizacao,
             "data": data_list,
             "dpd": dpd,
