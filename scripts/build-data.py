@@ -42,8 +42,9 @@ NORMALIZACOES = {
     "HEINEKEN": "CERVEJA HEINEKEN",
 }
 
-# PDV APELIDO → Operação display name (da aba BAR)
-MAPA_PDV_OPERACAO = {
+# PDV APELIDO → Operação display name (Caçapava 2026)
+# Cada evento define seu próprio mapa em EVENTOS_CONFIG (ver abaixo).
+MAPA_PDV_OPERACAO_CACAPAVA = {
     "A1. ATENDENTE.CORP":         "CAMAROTE CORP",
     "BAR CORPORATIVO":            "CAMAROTE CORP",
     "C1.CAIXA.CORP":              "CAMAROTE CORP",
@@ -70,32 +71,62 @@ MAPA_PDV_OPERACAO = {
     "ESPETO SECRETARIO GARCOM":   "ESPETO SECRETARIO",
 }
 
-# Categorias consideradas BEBIDAS (relatório foca em bebidas)
+# Categorias consideradas BEBIDAS (relatório foca em bebidas).
+# Inclui variantes de nomenclatura entre eventos (Caçapava usa SOFT/DRINK,
+# Bragança usa SOFTS/DRINKS) e categorias específicas por ponto de venda
+# (ex.: NOVA ERA BEBIDAS, BEBIDAS PIT BUL, MOCHILEIRO de Bragança).
 CATEGORIAS_BEBIDAS = {
+    # Caçapava 2026
     "CERVEJAS", "CERVEJARIA PRAÇA",
     "DRINK", "SOFT", "GARRAFAS",
     "WHISKERIA - DOSES", "WHISKERIA - DRINKS PRONTOS",
     "WHISKERIA - BATIDAS E CAIPIRINHAS", "WHISKERIA - DRINKS COPAO",
     "WHISKERIA - BEBIDAS LATA",
     "COMIDA TROPEIRA - BEBIDAS",
+    # Bragança Paulista 2026
+    "DRINKS", "SOFTS", "BEBIDAS",
+    "MOCHILEIRO",                 # ambulantes (CAIXA.AMB.*)
+    "BEBIDAS PIT BUL",            # P.A. CERVEJA PITBULL
+    "NOVA ERA BEBIDAS",           # P.A. LANCHONETE/PASTEL NOVA ERA
+    "BEBIDAS DEZINHO",            # P.A. PASTEL DEZINHO
+    "BEBIDAS CAFETERIA",          # P.A. CAFETERIA JURA
 }
 # Operações de ALIMENTAÇÃO. São excluídas do relatório principal de bebidas
 # (OPS_POR_DATA, DATA, Vendas, etc.). Se venderem alguma bebida, ela é
 # capturada separadamente em ALIMENTACAO_POR_DATA (aba Alimentação — só consulta).
 # Operações SEM bebidas aparecem na aba Alimentação como "sem bebidas vendidas".
-OPERACOES_ALIMENTACAO = {
+OPERACOES_ALIMENTACAO_CACAPAVA = {
     # Vendem bebidas misturadas:
     "COMIDA TROPEIRA", "NOVA ERA",
     # Só comida (sem bebidas):
     "DOCE MACIEL", "ESPETINHO JALES", "ESPETO SECRETARIO",
     "HOT DOG JUCA", "KREP SUIÇO", "PASTEL FERNANDO", "PIZZA CONE RAUL",
 }
-# Alias mantido para compatibilidade com código existente
-OPERACOES_EXCLUIDAS = OPERACOES_ALIMENTACAO
 
 # BUFFET PRIME é comida (camarote) — excluído do relatório. Mantemos o PDV
-# mapeado em MAPA_PDV_OPERACAO apenas para que a operação apareça quando
+# mapeado em MAPA_PDV_OPERACAO_CACAPAVA apenas para que a operação apareça quando
 # houver bebidas vendidas ali no futuro.
+
+# -----------------------------------------------------------------------------
+# Bragança Paulista 2026 — PDVs com nomenclatura nova (prefixos por setor).
+# Setores principais derivam do prefixo antes do primeiro ponto.
+# Pontos `P.A.`/`A.C`/`A.F` são alimentação (cada um vira sua própria operação
+# isolada na aba Alimentação).
+# -----------------------------------------------------------------------------
+def mapa_pdv_braganca(pdv: str) -> str:
+    pu = (pdv or "").upper()
+    if pu.startswith("FRONT."):       return "FRONT"
+    if pu.startswith("INTENSE."):     return "INTENSE"
+    if pu.startswith("CORPORATIVO."): return "CORPORATIVO"
+    if pu.startswith("CAIXA.AMB"):    return "AMBULANTES"
+    return pdv  # alimentação e outros: mantém nome do PDV como operação
+
+def eh_alimentacao_braganca(pdv: str) -> bool:
+    pu = (pdv or "").upper()
+    return pu.startswith("P.A") or pu.startswith("A.C") or pu.startswith("A.F")
+
+def eh_ambulante_braganca(pdv: str) -> bool:
+    return (pdv or "").upper().startswith("CAIXA.AMB")
 
 
 # =============================================================================
@@ -193,13 +224,18 @@ def categoria_eh_bebida(cat: str) -> bool:
     return c in {k.upper() for k in CATEGORIAS_BEBIDAS}
 
 
-# Sessão do evento: 17h do dia X → 08h do dia X+1.
-# Chave da sessão = data de INÍCIO (dia X). Retorna None se fora da janela.
+# Sessão do evento: 17h do dia X → 16h59 do dia X+1 (cobre 24h, sem gap).
+# Chave da sessão = data de INÍCIO (dia X). Política: NUNCA descartar dados.
+#   - hh ≥ 17: sessão = dia atual (noite começou)
+#   - hh < 17: sessão = dia anterior (madrugada e tarde do dia seguinte ainda
+#              pertencem à sessão da noite anterior)
 # O set de sessões válidas é mutável — cada evento define o seu em main().
 SESSOES_VALIDAS: set = set()
 
 def sessao_de(datetime_str):
-    """Dado 'YYYY-MM-DD HH:MM:SS...', retorna a chave da sessão ou None."""
+    """Dado 'YYYY-MM-DD HH:MM:SS...', retorna a chave da sessão (sempre, exceto
+    se a string estiver malformada). Sem janela cinza: toda transação válida
+    é atribuída a alguma sessão."""
     if not datetime_str or len(datetime_str) < 13:
         return None
     try:
@@ -209,11 +245,13 @@ def sessao_de(datetime_str):
         return None
     if hh >= 17:
         sess = d
-    elif hh < 8:
-        sess = d - timedelta(days=1)
     else:
-        return None  # 08-16h: fora de sessão (gray window)
+        sess = d - timedelta(days=1)
     key = sess.isoformat()
+    # Set vazio = sem filtro: aceita qualquer sessão presente nos dados.
+    # Isso permite ingestão incremental sem editar config a cada export novo.
+    if not SESSOES_VALIDAS:
+        return key
     return key if key in SESSOES_VALIDAS else None
 
 
@@ -227,13 +265,33 @@ def sessao_de(datetime_str):
 EVENTOS_CONFIG: dict[str, dict] = {
     "cacapava-2026": {
         "nome": "Rodeio de Caçapava 2026",
-        "sessoes": {"2026-04-17", "2026-04-18"},
+        # `sessoes` opcional: vazio = aceita qualquer sessão presente nos dados.
+        # Política do sistema: ingestão é incremental — todo xlsx novo entra,
+        # dedup global por PedidoDetalheId descarta duplicatas, e novas datas
+        # entram automaticamente sem precisar editar config.
+        "sessoes": set(),
         "pasta": "cacapava-2026",
+        # 2 abas dedicadas: BAR (operação via mapa) + AMBULANTE (operação fixa).
+        # Aliases por aba: GERAL_CACAPAVA.xlsx usa "BAR"/"AMBULANTE";
+        # Lista_transacao_Braganca_PARCIAL.xlsx (que também contém Caçapava)
+        # usa "CAÇAPAVA BAR"/"caçapava ambulante".
+        "abas": [(["BAR", "CAÇAPAVA BAR"], None, "bar"),
+                 (["AMBULANTE", "caçapava ambulante"], "BEBIDAS AMBULANTES", "amb")],
+        "mapa_pdv": lambda pdv: MAPA_PDV_OPERACAO_CACAPAVA.get(pdv, pdv),
+        "eh_alimentacao_op": lambda op, pdv: op in OPERACOES_ALIMENTACAO_CACAPAVA,
+        "alimentacao_canon": OPERACOES_ALIMENTACAO_CACAPAVA,  # pré-registra mesmo sem vendas
     },
-    "branca-paulista-2026": {
-        "nome": "Rodeio de Branca Paulista 2026",
-        "sessoes": {"2026-05-22", "2026-05-23"},  # placeholder — ajustar quando tiver planilha
-        "pasta": "branca-paulista-2026",
+    "braganca-paulista-2026": {
+        "nome": "Rodeio de Bragança Paulista 2026",
+        # `sessoes` vazio = auto-descobre nos dados (ver cacapava-2026 acima).
+        "sessoes": set(),
+        "pasta": "braganca-paulista-2026",
+        # 1 aba só: classifica BAR vs AMB pelo PDV
+        "abas": [("BRAGANÇA", None, "auto")],
+        "mapa_pdv": mapa_pdv_braganca,
+        "eh_alimentacao_op": lambda op, pdv: eh_alimentacao_braganca(pdv),
+        "eh_ambulante_pdv": eh_ambulante_braganca,  # usado quando aba_tipo="auto"
+        "alimentacao_canon": set(),  # descobre dinamicamente da planilha
     },
 }
 
@@ -243,7 +301,14 @@ EVENTO_PADRAO = "cacapava-2026"
 # =============================================================================
 # Processamento
 # =============================================================================
-def processar(xlsx_files: list[Path]):
+def processar(xlsx_files: list[Path], cfg: dict):
+    """Processa lista de xlsx. cfg = entrada do EVENTOS_CONFIG (mapa_pdv, abas, etc)."""
+    abas_spec = cfg["abas"]                                 # [(sheet_name, grupo_fixo, tipo)]
+    mapa_pdv = cfg["mapa_pdv"]                              # callable: pdv -> operacao
+    eh_alimentacao = cfg["eh_alimentacao_op"]               # callable: (op, pdv) -> bool
+    eh_amb_pdv = cfg.get("eh_ambulante_pdv", lambda p: False)  # usado em aba auto
+    alimentacao_canon = cfg.get("alimentacao_canon", set())    # ops alimentação pré-registradas
+
     # Set global de IDs processados (dedup)
     ids_vistos: set[str] = set()
 
@@ -272,14 +337,24 @@ def processar(xlsx_files: list[Path]):
     total_linhas = 0
     total_dup = 0
     total_nao_bebida = 0
+    # Timestamp da última transação processada (qualquer linha válida com data)
+    ultima_atualizacao = ""
 
     for xlsx in xlsx_files:
         print(f"📄 Processando: {xlsx.name}")
-        for aba, grupo_fixo in [("BAR", None), ("AMBULANTE", "BEBIDAS AMBULANTES")]:
-            rows = read_sheet(xlsx, aba)
+        for aba_spec_name, grupo_fixo, aba_tipo in abas_spec:
+            # aba_spec_name pode ser str ou list[str] (aliases). Tenta cada um até achar.
+            nomes = [aba_spec_name] if isinstance(aba_spec_name, str) else list(aba_spec_name)
+            rows = []
+            aba = None
+            for n in nomes:
+                rows = read_sheet(xlsx, n)
+                if rows:
+                    aba = n
+                    break
             if not rows:
                 continue
-            print(f"   Aba {aba}: {len(rows)} linhas (sem header)")
+            print(f"   Aba {aba} ({aba_tipo}): {len(rows)} linhas (sem header)")
             for r in rows:
                 total_linhas += 1
                 pedido_det_id = (r.get(COL_PEDIDO_DET_ID) or "").strip()
@@ -295,6 +370,10 @@ def processar(xlsx_files: list[Path]):
                 if not data_iso:
                     continue
                 hora_str = datetime_str[11:13] if len(datetime_str) >= 13 else None
+                # Atualiza timestamp da última transação válida (string compare é seguro
+                # porque datetime_str vem em ISO `YYYY-MM-DD HH:MM:SS...`).
+                if datetime_str > ultima_atualizacao:
+                    ultima_atualizacao = datetime_str
 
                 pedido_id = (r.get(COL_PEDIDO_ID) or "").strip()
                 pdv = (r.get(COL_PDV_APELIDO) or "").strip()
@@ -314,12 +393,20 @@ def processar(xlsx_files: list[Path]):
 
                 valor = round(qtd * unit, 2)  # total real da linha
 
-                if aba == "BAR":
-                    operacao = MAPA_PDV_OPERACAO.get(pdv, pdv)
-                    grupo = "BEBIDAS"
-                else:  # AMBULANTE
+                # Determina se a linha é BAR ou AMB (efetivo).
+                # - aba_tipo "bar"/"amb": vem fixo da aba
+                # - aba_tipo "auto": classifica pelo PDV via eh_amb_pdv()
+                if aba_tipo == "auto":
+                    is_amb = eh_amb_pdv(pdv)
+                else:
+                    is_amb = (aba_tipo == "amb")
+
+                if is_amb:
                     operacao = "AMBULANTES"
                     grupo = "BEBIDAS AMBULANTES"
+                else:
+                    operacao = mapa_pdv(pdv)
+                    grupo = "BEBIDAS"
 
                 # Escopo da aba Alimentação: SÓ BEBIDAS vendidas em pontos de alimentação.
                 # - Categorias de comida: descartadas (comida não entra no relatório).
@@ -330,7 +417,7 @@ def processar(xlsx_files: list[Path]):
                     total_nao_bebida += 1
                     continue
 
-                if operacao in OPERACOES_ALIMENTACAO:
+                if eh_alimentacao(operacao, pdv):
                     ali = alimentacao_por_data[data_iso][operacao][produto]
                     ali["qtd"] += qtd
                     ali["valor"] += valor
@@ -346,22 +433,24 @@ def processar(xlsx_files: list[Path]):
 
                 if pedido_id:
                     pedidos_por_data[data_iso].add(pedido_id)
-                    if aba == "BAR":
-                        pedidos_bar_por_data[data_iso].add(pedido_id)
-                    else:
+                    if is_amb:
                         pedidos_amb_por_data[data_iso].add(pedido_id)
+                    else:
+                        pedidos_bar_por_data[data_iso].add(pedido_id)
 
                 # Timeline por hora (valor R$ e quantidade)
                 if hora_str is not None:
                     bucket_h = vendas_hora[data_iso][hora_str]
-                    if aba == "BAR":
-                        bucket_h["bar"] += valor
-                        bucket_h["bar_qtd"] += qtd
-                    else:
+                    if is_amb:
                         bucket_h["amb"] += valor
                         bucket_h["amb_qtd"] += qtd
-                    # Minuto absoluto desde 17:00 da sessão (mm_abs)
-                    # hh >= 17 → (hh - 17)*60 + mm;  hh < 8 → (hh + 7)*60 + mm
+                    else:
+                        bucket_h["bar"] += valor
+                        bucket_h["bar_qtd"] += qtd
+                    # Minuto absoluto desde 17:00 da sessão (mm_abs).
+                    # Sessão cobre 24h (17h até 16h59 do dia seguinte) → range 0..1439.
+                    # hh >= 17 → (hh - 17)*60 + mm    (17h-23h59 → 0..419)
+                    # hh < 17  → (hh + 7)*60 + mm     (0h-16h59  → 420..1439)
                     if len(datetime_str) >= 16:
                         try:
                             hh = int(datetime_str[11:13])
@@ -389,7 +478,7 @@ def processar(xlsx_files: list[Path]):
                 all_produtos[key]["qtd_sum"] += qtd
 
                 # Ambulantes: estatísticas por terminal
-                if aba == "AMBULANTE" and terminal:
+                if is_amb and terminal:
                     at = amb_por_data[data_iso][terminal]
                     at["qtd"] += qtd
                     at["valor"] += valor
@@ -514,9 +603,11 @@ def processar(xlsx_files: list[Path]):
     # Pré-registra TODAS as operações de alimentação conhecidas em cada sessão ativa,
     # mesmo as que não venderam bebidas — pra aparecerem na aba Alimentação como
     # "sem bebidas vendidas" (visibilidade operacional completa).
+    # Para eventos com `alimentacao_canon` vazio (ex.: Bragança), só aparecem as ops
+    # efetivamente presentes na planilha.
     sessoes_ativas = set(alimentacao_por_data.keys()) | set(ops_por_data.keys())
     for sess in sessoes_ativas:
-        for op in OPERACOES_ALIMENTACAO:
+        for op in alimentacao_canon:
             if op not in alimentacao_por_data[sess]:
                 alimentacao_por_data[sess][op]  # força criação via defaultdict (dict vazio)
 
@@ -535,7 +626,7 @@ def processar(xlsx_files: list[Path]):
                     "valor": round(d["valor"], 2),
                 })
             alimentacao_out[data_iso][op] = arr
-    return data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out
+    return data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out, ultima_atualizacao
 
 
 # =============================================================================
@@ -580,6 +671,7 @@ def _evento_vazio(nome: str, sessoes: list) -> dict:
     return {
         "nome": nome,
         "sessoes": sorted(sessoes),
+        "ultima_atualizacao": "",
         "data": [],
         "dpd": {},
         "ops": {},
@@ -616,14 +708,16 @@ def main():
 
         print(f"\n🎪 Processando evento: {cfg['nome']} ({evt_id})")
         SESSOES_VALIDAS = set(cfg["sessoes"])
-        data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out = processar(xlsx_files)
+        data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out, ultima_atualizacao = processar(xlsx_files, cfg)
         print(f"   Pedidos únicos:      {sum(pedidos_out.values())} ({pedidos_out})")
         print(f"   Pedidos BAR:         {sum(pedidos_bar_out.values())} ({pedidos_bar_out})")
         print(f"   Pedidos AMB:         {sum(pedidos_amb_out.values())} ({pedidos_amb_out})")
         print(f"   Produtos:            {len(data_list)}  · OPS: {sum(len(v) for v in ops_out.values())} linhas")
+        print(f"   Última transação:    {ultima_atualizacao}")
         eventos_out[evt_id] = {
             "nome": cfg["nome"],
             "sessoes": sorted(cfg["sessoes"]),
+            "ultima_atualizacao": ultima_atualizacao,
             "data": data_list,
             "dpd": dpd,
             "ops": ops_out,

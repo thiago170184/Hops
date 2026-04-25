@@ -13,7 +13,7 @@
 
 Clientes atuais (abril 2026):
 - **Rodeio de Caçapava 2026** (17/04 e 18/04)
-- **Rodeio de Branca Paulista 2026** (a acontecer — próximo fim de semana, a planilha chega depois)
+- **Rodeio de Bragança Paulista 2026** (24/04 sessão única até 25/04 10h — em andamento, dados parciais carregados)
 
 Público-alvo do relatório: operadores do evento + financeira. Usado para dimensionar equipe, repor estoque, entender ritmo de venda, identificar top terminais ambulantes.
 
@@ -21,21 +21,21 @@ Público-alvo do relatório: operadores do evento + financeira. Usado para dimen
 
 ## 2. Conceito de SESSÃO (crítico)
 
-Eventos não operam por dia civil. Cada **sessão** começa às **17h** e termina às **08h** do dia seguinte.
+Eventos não operam por dia civil. Cada **sessão** começa às **17h** e cobre **24h** (até 16h59 do dia seguinte). Política do sistema: **nunca descartar dados** — toda venda válida é atribuída a alguma sessão.
 
 - **Chave da sessão** = data de **início** (formato `YYYY-MM-DD`).
-- **Janela cinza** (08h–17h) = sem vendas — transações nesse range são descartadas.
 - Mapeamento (função `sessao_de` em `build-data.py`):
 
 | Hora da transação | Sessão |
 |---|---|
-| `hh >= 17` | mesmo dia |
-| `hh < 8` | dia anterior |
-| `08 ≤ hh < 17` | **descartar** |
+| `hh ≥ 17` | mesmo dia (noite começou) |
+| `hh < 17` | dia anterior (madrugada e tarde do dia seguinte ainda contam pra sessão da noite anterior) |
 
 **Nunca agregar por data civil** — sempre por sessão. Todos KPIs, gráficos e filtros respeitam `diasAtivos()`.
 
-`SESSOES_VALIDAS` é set de strings por evento, definido em `EVENTOS_CONFIG[evtId]["sessoes"]`. Exemplo Caçapava: `{"2026-04-17", "2026-04-18"}`.
+**Ingestão incremental**: `EVENTOS_CONFIG[evtId]["sessoes"]` é opcional. Quando vazio (`set()`), o filtro de sessão é desligado e qualquer data presente nos dados entra automaticamente. Dedup global por `PedidoDetalheId` cuida de linhas duplicadas entre exports diferentes.
+
+**Janela de pico (frontend)**: o overlay de janela de pico opera apenas no range "noturno" 17h-7h59 (`MIN_TOTAL = 900` minutos). Vendas em horário diurno (08h-16h59), se houver, entram em totais e gráfico horário, mas não na detecção de pico. Isso é intencional — pico é conceito da operação noturna do rodeio.
 
 ---
 
@@ -290,8 +290,8 @@ Pastas:
 /Users/thiagomonteiro/Downloads/hops-planilhas/
     cacapava-2026/
         GERAL_CACAPAVA.xlsx
-    branca-paulista-2026/
-        <xlsx futuro>
+    braganca-paulista-2026/
+        Lista_transacao_Braganca_PARCIAL.xlsx
 ```
 
 Script processa **um evento por vez** em loop, agregando em `eventos_out`, e injeta **um único** `const EVENTOS = {...}`.
@@ -360,7 +360,7 @@ O que o cliente pediu (ou ficou explícito nas conversas):
 - **Multi-usuário com permissões**: cliente final vê só o evento dele; operador Zig vê vários.
 - **Preservar todos os conceitos acima** (sessão, pico, fases, ritmo, alimentação, Pareto etc.).
 
-Não decidido ainda (ficou pro pós-Branca Paulista):
+Não decidido ainda (ficou pro pós-Bragança Paulista):
 - Webhook Meep vs pull periódico.
 - Tempo real (streaming) vs lote (refresh manual ou cron hourly).
 - Onboarding do cliente: eles mesmos upam xlsx até ter API? Ou só via Zig?

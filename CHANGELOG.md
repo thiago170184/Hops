@@ -7,6 +7,24 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.5.0] — 2026-04-25
+
+### Added
+- **Rodeio de Bragança Paulista 2026** ativo (sessão 24/04 16h → 25/04 10h). Dados parciais carregados a partir do export Meep `Lista_transacao_Braganca_PARCIAL.xlsx`. 5433 pedidos / 36 produtos / 4 operações (FRONT, INTENSE, CORPORATIVO, AMBULANTES) processados nesta primeira leva.
+- **Caçapava 2º fim de semana**: a planilha do Bragança traz também os dados de Caçapava (abas `CAÇAPAVA BAR` e `caçapava ambulante`) — adicionada à pasta `cacapava-2026/` ao lado do `GERAL_CACAPAVA.xlsx` original. Dedup global por `PedidoDetalheId` cortou as 25.477 linhas duplicadas. **+7.237 pedidos novos** na sessão 24/04 (5.013 BAR + 2.224 AMB). Sessão 25/04 noite e 26/04 entram automaticamente quando chegar export completo (parcial vai até 25/04 ~01h, que pelo cálculo de sessão ainda conta como noite de 24/04).
+- **Ingestão incremental por padrão (todos os eventos)**: `EVENTOS_CONFIG[evento].sessoes` agora é opcional/vazio por padrão — `sessao_de()` aceita qualquer data presente nos dados quando o set está vazio. Política do sistema: cada xlsx novo é incremental, dedup global por `PedidoDetalheId` descarta duplicatas, datas novas entram sem editar config. Aplicável a Caçapava, Bragança, e qualquer evento futuro.
+- **Sessão sem janela cinza (todos os eventos)**: `sessao_de` agora cobre **24h** (17h até 16h59 do dia seguinte) em vez de descartar transações em 08h-16h59. Política: **nunca perder dados**. Mapeamento simplificado: `hh ≥ 17` → sessão = dia atual; `hh < 17` → sessão = dia anterior. Backend gera `mm_abs` em range 0..1439. Janela de pico (frontend) continua filtrada em 0..899 (17h-7h59) — pico é conceito da operação noturna; eventuais vendas diurnas entram em totais mas não na detecção de pico.
+- **Aliases de aba por evento**: `abas` agora aceita lista de nomes alternativos por aba (ex: `["BAR", "CAÇAPAVA BAR"]`) — `processar()` tenta cada um até achar a aba existente no xlsx. Permite consumir a planilha do Bragança (que usa nomes prefixados) junto da planilha histórica de Caçapava (nomes simples) sem renomear abas.
+- **Suporte a planilha de aba única**: `EVENTOS_CONFIG` agora aceita `aba_tipo="auto"` que classifica BAR vs AMB pelo prefixo do PDV (`CAIXA.AMB.*` → ambulante).
+- **Mapa de PDV por evento**: `EVENTOS_CONFIG[evento].mapa_pdv` (callable). Bragança usa derivação por prefixo (`FRONT.*`, `INTENSE.*`, `CORPORATIVO.*`); Caçapava continua com dict explícito (`MAPA_PDV_OPERACAO_CACAPAVA`).
+- **Detecção de alimentação por evento**: `eh_alimentacao_op(op, pdv)`. Bragança classifica todo PDV `P.A.*` / `A.C *` / `A.F *` como alimentação (cada PDV vira sua própria operação isolada na aba Alimentação). Caçapava mantém set explícito (`OPERACOES_ALIMENTACAO_CACAPAVA`).
+- **Categorias de bebida** ampliadas com variantes de Bragança: `DRINKS`, `SOFTS`, `BEBIDAS`, `MOCHILEIRO`, `BEBIDAS PIT BUL`, `NOVA ERA BEBIDAS`, `BEBIDAS DEZINHO`, `BEBIDAS CAFETERIA`.
+
+### Fixed
+- **Typo "Branca Paulista" → "Bragança Paulista"** em `EVENTOS_CONFIG`, ID do evento (`branca-paulista-2026` → `braganca-paulista-2026`), pasta de planilhas e `CONCEITOS.md`.
+
+---
+
 ## [1.4.0] — 2026-04-22
 
 ### Added
