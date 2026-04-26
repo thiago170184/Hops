@@ -7,6 +7,13 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.8.1] — 2026-04-26
+
+### Changed
+- **KPIs do Dashboard refeitos**: 9+ cards desproporcionais viraram **5 cards consolidados na mesma linha** — Faturamento Total + Bar + Ambulantes + Alimentação + Serviços. Cada card de operação mostra fat (valor grande) + 3 stats inline (itens · pedidos · ticket médio). Pct e badge "isolado" (Serviços) no header. Layout responsivo: desktop 5 cols / tablet 3 cols (Total span 3) / mobile 1 col.
+
+---
+
 ## [1.8.0] — 2026-04-26
 
 ### Added
