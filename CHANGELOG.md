@@ -7,6 +7,13 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.7.1] — 2026-04-26
+
+### Fixed
+- **Filtro de Data não abria ao trocar de evento** (Bragança, ZOps multi-evento). `montarFiltroData()` é chamado a cada troca de evento via `reinitEvento()`, e usava `addEventListener('click', ...)` no botão do dropdown — empilhava handlers. Após troca, dois listeners disparavam (toggle x2) e o painel "abria e fechava" no mesmo clique. Trocado por `.onclick`/`.onchange` (substitui handler em vez de empilhar). Mesmo fix aplicado aos checkboxes, ao master "Todas as sessões" e ao listener `document.click` que fecha panels ao clicar fora.
+
+---
+
 ## [1.7.0] — 2026-04-26
 
 ### Added
