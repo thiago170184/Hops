@@ -7,6 +7,25 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.8.0] — 2026-04-26
+
+### Added
+- **`OVERRIDES_CATEGORIA_PRODUTO` no `build-data.py`** — dicionário central de keywords por categoria correta. Aplica override automático na ingestão (qualquer sistema: Zig, Meep, Dpen, etc) quando o nome do produto bate com keyword conhecida. Funciona como "filtro de qualidade do cadastro" do lado HOPS, independente do que a fonte cadastrou.
+- **`corrigir_categoria(categoria_origem, produto)` helper** — aplicado em toda linha antes do filtro de bebida. Logado contador `_overrides_aplicados` (mostra no print final do build).
+- **Skill global `/th-auditor-categorias`** (vive em `~/.claude/skills/`, fora do repo) — auditor agnóstico de sistema. Cruza Categoria registrada com nome do produto detectando classificações erradas. Gera 3 saídas: relatório-Fornecedor `.txt` (formato Produto + PDV + Correção, com resumo geral no topo), sugestões de novos OVERRIDES, sugestões de NORMALIZACOES. Não altera código — apenas relata pra revisão humana.
+
+### Changed
+- **`classificar_servico` mais preciso**: removida regra gulosa `cu == "OUTROS" → BILHETERIA` que pegava produtos cadastrados errado como Outros (MINI BURGUER, OPEN PRIME etc). Agora roteamento usa: PDV `*ESTACIONAMENTO*`/`*PARQUE DIVERS*`/`BILHETERIA*` ou nome do produto contém `INGRESSO`/`BILHETE`/`PROMOCIONAL`/`CORTESIA`. Captura corretamente `P.A. ESTACIONAMENTO` (Meep) e `ESTACIONAMENTO` (Zig).
+- **`NORMALIZACOES`** ganhou `CERVEJA HEI Z` → `CERVEJA HEINEKEN` e `BATATA BAC CHE` → `BATATA CHE BAC` (ordem invertida pela Zig).
+- **OVERRIDES iniciais cobrem** 79+ keywords: marcas de bebida (SMIRNOFF, AMSTEL, JACK, BALLANTINES, OLD PA, OLD PARR, RED BULL, MONSTER, etc) + serviços (INGRESSO, PROMOCIONAL, PCD, CARRO, MOTO, VAN).
+
+### Validated
+- **19.154 overrides aplicados em 114 produtos** distintos no evento Bragança Paulista 2026 (CSV Zig 31.873 linhas).
+- **Sessão Zig pura 2026-04-25**: HOPS calculou R$ 800.779 (era R$ 638.149 antes), CSV-HOPS-elegível esperado R$ 794.913 — **diff +0,74%** por arredondamento de unitário (Zig vem como total, HOPS reverte pra unit).
+- **CSV ↔ Dashboard Zig**: diff +R$ 4.042 (+0,38%) — diferença NA fonte (Zig Cashless não listado no dashboard + reclassificações internas Zig). Não é cálculo HOPS errado.
+
+---
+
 ## [1.7.1] — 2026-04-26
 
 ### Fixed

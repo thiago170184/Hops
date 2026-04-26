@@ -46,7 +46,71 @@ NORMALIZACOES = {
     "CERV AMSTEL": "CERVEJA AMSTEL",
     "CERVEJA AMS 350": "CERVEJA AMSTEL",
     "CERVEJA HEI 350": "CERVEJA HEINEKEN",
+    "CERVEJA HEI Z": "CERVEJA HEINEKEN",
+    # Lanche com bacon e cheddar — Zig truncou a ordem dos ingredientes
+    "BATATA BAC CHE": "BATATA CHE BAC",
 }
+
+# =============================================================================
+# Overrides de categoria por keyword no NOME DO PRODUTO
+# =============================================================================
+# Política agnóstica de sistema (Zig, Meep, Dpen, futuros): se o nome do produto
+# contém uma keyword conhecida, força a categoria correta — sobrescrevendo o que
+# a fonte cadastrou. Necessário porque cadastros de PDV são frequentemente
+# errados (ex: SMIRNOFF cadastrado como "Comida" no Zig de Bragança).
+#
+# A skill /th-auditor-categorias lista produtos suspeitos pra (a) corrigir na
+# fonte e (b) sugerir keywords novas pra este dict.
+OVERRIDES_CATEGORIA_PRODUTO = {
+    "Bebida": [
+        # Cervejas
+        "AMSTEL", "AMESTEL", "HEINEKEN", "BRAHMA", "SKOL", "ANTARCTICA",
+        "CORONA", "STELLA", "BUDWEISER", "CERV ", "CERVEJA ", "BARRIL",
+        "CHOPP",
+        # Destilados/Premium
+        "ABSOLUT", "SMIRNOFF", "BACARDI", "JACK ", "JACK D", "BALLANTINES",
+        "JOHNNY", "JW ", "TANQUERAY", "OLD PA", "BELEZA", "OLD PARR",
+        "WHISKY", "WHISKEY", "VODKA", "TEQUILA", "GIN ", "RUM ", "CACHACA",
+        "CAIPIRINHA", "CAIPIROSKA",
+        # Refrigerantes/Energéticos/Não-alcoólicos
+        "RED BULL", "REDBULL", "MONSTER", "COCA", "GUARANA", "PEPSI",
+        "REFRIGERANTE", "REFRI", "AGUA TONICA", "TONICA",
+        # Drinks genéricos
+        "DRINK", "DRINKSSI", "DOSE",
+    ],
+    "Outros": [
+        # Bilheteria/serviço
+        "INGRESSO", "BILHETE", "CORTESIA", "PROMOCIONAL", "PCD",
+        # Estacionamento (vagas vendidas como "Comida" no Zig de Bragança)
+        "CARRO", "MOTO", "VAN",
+    ],
+}
+
+# Pré-compila keywords ordenadas (maior primeiro pra match guloso correto)
+_OVERRIDE_BUCKETS = [
+    (categoria, sorted([kw.upper() for kw in kws], key=lambda s: -len(s)))
+    for categoria, kws in OVERRIDES_CATEGORIA_PRODUTO.items()
+]
+# Contador global de overrides aplicados (zera a cada processar())
+_overrides_aplicados = Counter()
+
+def corrigir_categoria(categoria_origem: str, produto: str) -> str:
+    """Se o nome do produto bate com keyword de OVERRIDES_CATEGORIA_PRODUTO,
+    retorna a categoria correta — independente do que veio da fonte. Senão
+    retorna a categoria original. Funciona pra qualquer sistema (Zig, Meep, Dpen)."""
+    if not produto:
+        return categoria_origem
+    pu = produto.upper().strip()
+    # Remove prefixo (C) de cancelamento pra match
+    if pu.startswith("(C)"):
+        pu = pu[3:].strip()
+    for cat_correta, kws in _OVERRIDE_BUCKETS:
+        for kw in kws:
+            if kw in pu:
+                if categoria_origem != cat_correta:
+                    _overrides_aplicados[(produto, categoria_origem, cat_correta)] += 1
+                return cat_correta
+    return categoria_origem
 
 # PDV APELIDO → Operação display name (Caçapava 2026)
 # Cada evento define seu próprio mapa em EVENTOS_CONFIG (ver abaixo).
@@ -128,10 +192,24 @@ def mapa_pdv_braganca(pdv: str) -> str:
     if pu.startswith("AMBULANTES."):  return "AMBULANTES"   # Zig
     return pdv  # alimentação e outros: mantém nome do PDV como operação
 
+# PDVs específicos do Bragança Zig que vendem comida sem prefixo padrão.
+# Detectados no CSV de 26/04: cadastro inconsistente da Zig — esses pontos não
+# têm prefixo ALIMENTACAO./ALIM./ALI., mas operacionalmente são lanchonetes.
+PDVS_ALIMENTACAO_BRAGANCA_EXTRA = {
+    "CREPE ISONEY", "GREGO", "GARCOM LANCHONETE HAMILTON", "GARCOM NOVA ERA",
+    "GARCOM CIA DO LANCHE", "BUFFET PRIME EMPRESARIAL", "GARCOM MAZZA CAMAROTE",
+    "GELO",
+}
+
 def eh_alimentacao_braganca(pdv: str) -> bool:
     pu = (pdv or "").upper()
-    return (pu.startswith("P.A") or pu.startswith("A.C") or pu.startswith("A.F")  # Meep
-            or pu.startswith("ALIMENTACAO."))                                       # Zig
+    if pu.startswith(("P.A", "A.C", "A.F")):                  # Meep
+        return True
+    if pu.startswith(("ALIMENTACAO.", "ALIM.", "ALI.")):      # Zig (3 variações de prefixo)
+        return True
+    if pu in PDVS_ALIMENTACAO_BRAGANCA_EXTRA:                  # Zig sem prefixo
+        return True
+    return False
 
 def eh_ambulante_braganca(pdv: str) -> bool:
     pu = (pdv or "").upper()
@@ -139,19 +217,20 @@ def eh_ambulante_braganca(pdv: str) -> bool:
 
 
 # Roteamento SERVIÇOS (Bilheteria/Estacionamento/Parques) — paralelo a Alimentação.
-# Aplicado ANTES do filtro de bebidas. Funciona pra MEEP e ZIG (mesmo padrão de PDV).
+# Aplicado ANTES do filtro de bebidas. Funciona pra MEEP e ZIG.
+# Detecção é feita por PDV E nome do produto (não por categoria — Outros é
+# poluído por cadastro errado, ex: MINI BURGUER cadastrado como Outros no Zig).
 def classificar_servico(pdv: str, categoria: str, produto: str):
     pu = (pdv or "").upper()
-    cu = (categoria or "").upper()
     prodU = (produto or "").upper()
-    if pu == "ESTACIONAMENTO" or pu.startswith("ESTACIONAMENTO."):
+    if "ESTACIONAMENTO" in pu:                # Meep: P.A. ESTACIONAMENTO; Zig: ESTACIONAMENTO
         return "ESTACIONAMENTO"
-    if pu == "PARQUE DIVERSAO" or pu.startswith("PARQUE"):
+    if "PARQUE" in pu and "DIVERS" in pu:     # Meep: P.A. PARQUE DIVERSAO; Zig: PARQUE DIVERSAO
         return "PARQUES"
-    if "INGRESSO" in prodU or "BILHETERIA" in pu or "BILHET" in pu:
+    if pu.startswith("BILHETERIA") or "BILHET" in pu:   # PDV de bilheteria → tudo é ingresso
         return "BILHETERIA"
-    # Categoria Zig "Outros" agrupa PROMOCIONAL/INGRESSO em PDVs operacionais
-    if cu == "OUTROS":
+    # Produto explicitamente ingresso/cortesia/promocional (tipos de "entrada no evento")
+    if any(kw in prodU for kw in ("INGRESSO","BILHETE","PROMOCIONAL","CORTESIA")):
         return "BILHETERIA"
     return None
 
@@ -278,7 +357,91 @@ def _br_decimal(s):
     except ValueError: return 0.0
 
 
-def read_xlsx_zig(xlsx_path: Path):
+def read_zig(path: Path):
+    """Dispatcher: lê arquivo da Zig (xlsx OU csv) e devolve dicts no formato Meep.
+    Detecta pela extensão. Centralizado pra que o pipeline chame um nome só."""
+    ext = path.suffix.lower()
+    if ext == ".csv":
+        return _read_zig_csv(path)
+    return _read_zig_xlsx(path)
+
+
+def _read_zig_csv(path: Path):
+    """CSV Zig: ISO-8859-1, separador `;`, valores com prefixo `=" "` (Excel quote),
+    decimal vírgula BR, datas dd/mm/yyyy hh:mm:ss. Header em linha que tem
+    'Transação' e 'Data Realização' (geralmente linha 14, mas detecta sozinho).
+    Filtra Status != 'Efetivada'.
+    """
+    import csv as csvmod
+    with open(path, encoding="iso-8859-1", newline="") as f:
+        raw_lines = f.readlines()
+
+    header_idx = None
+    for i, line in enumerate(raw_lines[:50]):
+        if "Transação" in line and "Data Realização" in line:
+            header_idx = i
+            break
+    if header_idx is None:
+        return []
+
+    reader = csvmod.reader(raw_lines[header_idx:], delimiter=";")
+    headers = [h.strip() for h in next(reader)]
+    hmap = {h: i for i, h in enumerate(headers)}
+    needed = ["Transação", "Data Realização", "Operação", "Terminal", "Nome Ponto",
+              "Categoria Produto", "Produto", "Quantidade", "Valor", "Status", "Tipo Ponto"]
+    if any(c not in hmap for c in needed):
+        print(f"⚠️  CSV Zig: colunas faltando. Headers: {headers}")
+        return []
+
+    def cell(row, name):
+        v = row[hmap[name]] if hmap[name] < len(row) else ""
+        v = v.strip()
+        # Remove Excel quote `="..."`
+        if v.startswith('="') and v.endswith('"'):
+            v = v[2:-1]
+        return v.strip()
+
+    out = []
+    for row in reader:
+        if not any(c.strip() for c in row):
+            continue
+        if cell(row, "Status") != "Efetivada":
+            continue
+        tx = cell(row, "Transação")
+        if not tx:
+            continue
+        # Data BR → ISO
+        data_br = cell(row, "Data Realização")
+        try:
+            dt = datetime.strptime(data_br, "%d/%m/%Y %H:%M:%S")
+            data_iso = dt.strftime("%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            continue
+        pdv = cell(row, "Nome Ponto")
+        cat = cell(row, "Categoria Produto")
+        prod = cell(row, "Produto")
+        terminal = cell(row, "Terminal")
+        try: qtd = float(cell(row, "Quantidade").replace(",", "."))
+        except ValueError: qtd = 0
+        valor_total = _br_decimal(cell(row, "Valor"))
+        unit = round(valor_total / qtd, 4) if qtd not in (0, 0.0) else 0.0
+        det_id = f"ZIG-{tx}-{prod}-{qtd}-{valor_total}-{terminal}"
+        out.append({
+            "PedidoId":             tx,
+            "PedidoDetalheId":      det_id,
+            "DataCriacaoBrasilia":  data_iso,
+            "PDV APELIDO":          pdv,
+            "Categoria":            cat,
+            "Produto":              prod,
+            "Quantidade":           str(qtd),
+            "ValorProduto":         str(unit),
+            "Equipamento":          terminal,
+            "_sistema":             "ZIG",
+        })
+    return out
+
+
+def _read_zig_xlsx(xlsx_path: Path):
     """Lê XLSX da Zig e devolve dicts no FORMATO MEEP. Filtra:
     - Status != 'Efetivada' (defensivo; hoje todos vêm Efetivada)
     Não filtra Tipo Ponto: Produção também é venda legítima (vimos R$ 8k+ em
@@ -482,6 +645,8 @@ def processar(fontes: list, cfg: dict):
 
     # Set global de IDs processados (dedup)
     ids_vistos: set[str] = set()
+    # Reset contador de overrides pra este evento
+    _overrides_aplicados.clear()
 
     # Estruturas finais
     ops_por_data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "valor": 0, "categoria": "", "unit_hist": []})))
@@ -525,8 +690,8 @@ def processar(fontes: list, cfg: dict):
       for xlsx in xlsx_files:
         print(f"📄 [{sistema}] Processando: {xlsx.name}")
         if leitor == "zig":
-            zig_rows = read_xlsx_zig(xlsx)
-            print(f"   1 aba Zig: {len(zig_rows)} linhas válidas (Efetivada/Operacional)")
+            zig_rows = read_zig(xlsx)
+            print(f"   1 aba Zig ({xlsx.suffix.lstrip('.').upper()}): {len(zig_rows)} linhas válidas (Efetivada)")
             iter_abas = [(zig_rows, None, "auto")]
         else:
             iter_abas = []
@@ -572,8 +737,12 @@ def processar(fontes: list, cfg: dict):
 
                 pedido_id = (r.get(COL_PEDIDO_ID) or "").strip()
                 pdv = (r.get(COL_PDV_APELIDO) or "").strip()
-                cat = (r.get(COL_CATEGORIA) or "").strip()
-                produto = normalizar_produto(r.get(COL_PRODUTO))
+                cat_origem = (r.get(COL_CATEGORIA) or "").strip()
+                produto_bruto = (r.get(COL_PRODUTO) or "").strip()
+                # Override por nome do produto (regras agnósticas de sistema).
+                # Ex.: SMIRNOFF cadastrado como "Comida" no Zig vira "Bebida".
+                cat = corrigir_categoria(cat_origem, produto_bruto)
+                produto = normalizar_produto(produto_bruto)
                 try: qtd = float(r.get(COL_QUANTIDADE) or 0)
                 except: qtd = 0
                 # ValorProduto = preço unitário do cardápio. O total da linha
@@ -703,6 +872,7 @@ def processar(fontes: list, cfg: dict):
     print(f"   Linhas duplicadas:   {total_dup}  (dedup via PedidoDetalheId)")
     print(f"   Serviços (rota):     {total_servicos}  (Bilheteria/Estacionamento/Parques)")
     print(f"   Ignoradas (não-beb): {total_nao_bebida}")
+    print(f"   Overrides cat aplic: {sum(_overrides_aplicados.values())}  ({len(_overrides_aplicados)} produtos distintos)")
     print(f"   IDs únicos:          {len(ids_vistos)}")
     print(f"   Sessões:             {sorted(ops_por_data.keys())}")
     print(f"   Sistemas/sessão:     " + ", ".join(f"{k}={sorted(v)}" for k,v in sorted(sistemas_por_sessao.items())))
@@ -941,9 +1111,11 @@ def _coletar_fontes(cfg: dict, evt_id: str) -> list:
         for sub in cfg["subpastas"]:
             p = pasta / sub["sub"]
             if p.exists():
-                xlsxs = sorted(p.glob("*.xlsx"))
-                if xlsxs:
-                    fontes.append((xlsxs, sub["sistema"], sub["leitor"], sub["abas"]))
+                # Leitor zig aceita xlsx OU csv (Zig exporta nos 2 formatos)
+                exts = ("*.xlsx", "*.csv") if sub["leitor"] == "zig" else ("*.xlsx",)
+                arquivos = sorted([x for ext in exts for x in p.glob(ext)])
+                if arquivos:
+                    fontes.append((arquivos, sub["sistema"], sub["leitor"], sub["abas"]))
         if fontes:
             return fontes
     # Sem subpastas (ou subpastas vazias): tenta pasta principal como Meep
