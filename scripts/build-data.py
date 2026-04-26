@@ -24,7 +24,7 @@ Futuramente pode ser estendido pra baixar direto do Google Drive via API.
 import zipfile, re, json, sys, os
 import xml.etree.ElementTree as ET
 from collections import defaultdict, Counter
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 # =============================================================================
@@ -38,8 +38,14 @@ NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 
 # Normalização de nomes de produtos (alias → canônico)
 NORMALIZACOES = {
+    # Meep
     "AMSTEL": "CERVEJA AMSTEL",
     "HEINEKEN": "CERVEJA HEINEKEN",
+    # Zig (Bragança) — variações de nome do mesmo SKU
+    "AMESTEL": "CERVEJA AMSTEL",       # typo recorrente no cadastro Zig
+    "CERV AMSTEL": "CERVEJA AMSTEL",
+    "CERVEJA AMS 350": "CERVEJA AMSTEL",
+    "CERVEJA HEI 350": "CERVEJA HEINEKEN",
 }
 
 # PDV APELIDO → Operação display name (Caçapava 2026)
@@ -83,8 +89,8 @@ CATEGORIAS_BEBIDAS = {
     "WHISKERIA - BATIDAS E CAIPIRINHAS", "WHISKERIA - DRINKS COPAO",
     "WHISKERIA - BEBIDAS LATA",
     "COMIDA TROPEIRA - BEBIDAS",
-    # Bragança Paulista 2026
-    "DRINKS", "SOFTS", "BEBIDAS",
+    # Bragança Paulista 2026 (Meep e Zig — Zig usa singular "BEBIDA")
+    "DRINKS", "SOFTS", "BEBIDAS", "BEBIDA",
     "MOCHILEIRO",                 # ambulantes (CAIXA.AMB.*)
     "BEBIDAS PIT BUL",            # P.A. CERVEJA PITBULL
     "NOVA ERA BEBIDAS",           # P.A. LANCHONETE/PASTEL NOVA ERA
@@ -118,15 +124,36 @@ def mapa_pdv_braganca(pdv: str) -> str:
     if pu.startswith("FRONT."):       return "FRONT"
     if pu.startswith("INTENSE."):     return "INTENSE"
     if pu.startswith("CORPORATIVO."): return "CORPORATIVO"
-    if pu.startswith("CAIXA.AMB"):    return "AMBULANTES"
+    if pu.startswith("CAIXA.AMB"):    return "AMBULANTES"   # Meep
+    if pu.startswith("AMBULANTES."):  return "AMBULANTES"   # Zig
     return pdv  # alimentação e outros: mantém nome do PDV como operação
 
 def eh_alimentacao_braganca(pdv: str) -> bool:
     pu = (pdv or "").upper()
-    return pu.startswith("P.A") or pu.startswith("A.C") or pu.startswith("A.F")
+    return (pu.startswith("P.A") or pu.startswith("A.C") or pu.startswith("A.F")  # Meep
+            or pu.startswith("ALIMENTACAO."))                                       # Zig
 
 def eh_ambulante_braganca(pdv: str) -> bool:
-    return (pdv or "").upper().startswith("CAIXA.AMB")
+    pu = (pdv or "").upper()
+    return pu.startswith("CAIXA.AMB") or pu.startswith("AMBULANTES.")
+
+
+# Roteamento SERVIÇOS (Bilheteria/Estacionamento/Parques) — paralelo a Alimentação.
+# Aplicado ANTES do filtro de bebidas. Funciona pra MEEP e ZIG (mesmo padrão de PDV).
+def classificar_servico(pdv: str, categoria: str, produto: str):
+    pu = (pdv or "").upper()
+    cu = (categoria or "").upper()
+    prodU = (produto or "").upper()
+    if pu == "ESTACIONAMENTO" or pu.startswith("ESTACIONAMENTO."):
+        return "ESTACIONAMENTO"
+    if pu == "PARQUE DIVERSAO" or pu.startswith("PARQUE"):
+        return "PARQUES"
+    if "INGRESSO" in prodU or "BILHETERIA" in pu or "BILHET" in pu:
+        return "BILHETERIA"
+    # Categoria Zig "Outros" agrupa PROMOCIONAL/INGRESSO em PDVs operacionais
+    if cu == "OUTROS":
+        return "BILHETERIA"
+    return None
 
 
 # =============================================================================
@@ -213,6 +240,141 @@ COL_VALOR_PRODUTO = "ValorProduto"   # preço unitário do cardápio
 COL_EQUIPAMENTO   = "Equipamento"
 
 
+# =============================================================================
+# Leitor ZIG → formato MEEP
+# =============================================================================
+# A planilha Zig "Lista de Transações" tem 1 aba só, header em row 14, dados em
+# row 15+. Datas vêm como serial Excel (float). Valor é TOTAL da linha (qtd*unit).
+# Não há ID único por linha → usa combo (Transação+Produto+Qtd+Valor+Terminal),
+# validado como único nas amostras (zero duplicatas em 16k+ linhas).
+#
+# Devolve dicts com as MESMAS chaves do leitor Meep (PedidoId, PedidoDetalheId,
+# DataCriacaoBrasilia, PDV APELIDO, Categoria, Produto, Quantidade, ValorProduto,
+# Equipamento) — assim o pipeline de agregação não precisa saber de qual sistema
+# veio. A origem fica em `_sistema = "ZIG"`.
+ZIG_HEADER_LABELS = {
+    "Transação": "tx", "Data Realização": "data", "Operação": "op_tipo",
+    "Terminal": "terminal", "Nome Ponto": "pdv", "Categoria Produto": "categoria",
+    "Produto": "produto", "Quantidade": "qtd", "Valor": "valor",
+    "Status": "status", "Tipo Ponto": "tipo_ponto",
+}
+
+def _excel_serial_to_iso(s):
+    """Serial Excel (1899-12-30 epoch) → 'YYYY-MM-DD HH:MM:SS'."""
+    try:
+        f = float(s)
+    except (ValueError, TypeError):
+        return ""
+    dt = datetime(1899, 12, 30) + timedelta(days=f)
+    return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _br_decimal(s):
+    """'15,00' → 15.00. Tolerante a número já em formato Python e a vazio."""
+    if s is None or s == "":
+        return 0.0
+    s = str(s).strip().replace(".", "").replace(",", ".") if "," in str(s) else str(s)
+    try: return float(s)
+    except ValueError: return 0.0
+
+
+def read_xlsx_zig(xlsx_path: Path):
+    """Lê XLSX da Zig e devolve dicts no FORMATO MEEP. Filtra:
+    - Status != 'Efetivada' (defensivo; hoje todos vêm Efetivada)
+    Não filtra Tipo Ponto: Produção também é venda legítima (vimos R$ 8k+ em
+    Bragança 25/04 nessas linhas).
+    """
+    with zipfile.ZipFile(xlsx_path) as z:
+        strings = []
+        try:
+            with z.open("xl/sharedStrings.xml") as f:
+                for si in ET.parse(f).getroot().iter(f"{NS}si"):
+                    strings.append("".join(t.text or "" for t in si.iter(f"{NS}t")))
+        except KeyError:
+            pass
+        # Zig tem 1 aba só → procura sheet1.xml direto
+        sheet_files = [n for n in z.namelist() if re.match(r"xl/worksheets/sheet\d*\.xml$", n)]
+        if not sheet_files:
+            return []
+        with z.open(sheet_files[0]) as f:
+            tree = ET.parse(f)
+
+    def cv(c):
+        t = c.get("t")
+        if t == "s":
+            idx = c.findtext(f"{NS}v")
+            return strings[int(idx)] if idx and int(idx) < len(strings) else None
+        if t == "inlineStr":
+            is_el = c.find(f"{NS}is")
+            return "".join(tt.text or "" for tt in is_el.iter(f"{NS}t")) if is_el is not None else None
+        return c.findtext(f"{NS}v")
+
+    # Lê todas as linhas
+    raw_rows = []
+    for row in tree.getroot().iter(f"{NS}row"):
+        cells = {}
+        for c in row.iter(f"{NS}c"):
+            ref = c.get("r")
+            if not ref: continue
+            col = re.match(r"[A-Z]+", ref).group(0)
+            cells[col] = cv(c)
+        raw_rows.append(cells)
+
+    # Encontra header (row com "Transação" e "Data Realização")
+    header_idx = None
+    header_cells = None
+    for i, cells in enumerate(raw_rows):
+        vals = set((v or "").strip() for v in cells.values() if v)
+        if "Transação" in vals and "Data Realização" in vals:
+            header_idx = i
+            header_cells = cells
+            break
+    if header_idx is None:
+        return []
+
+    letter_to_field = {}
+    for letter, name in header_cells.items():
+        key = ZIG_HEADER_LABELS.get((name or "").strip())
+        if key:
+            letter_to_field[letter] = key
+
+    out = []
+    for raw in raw_rows[header_idx + 1:]:
+        rec = {letter_to_field[l]: v for l, v in raw.items() if l in letter_to_field}
+        if not rec.get("tx"):  # linha vazia
+            continue
+        if (rec.get("status") or "").strip() != "Efetivada":
+            continue
+
+        tx = (rec.get("tx") or "").strip()
+        data_iso = _excel_serial_to_iso(rec.get("data"))
+        pdv = (rec.get("pdv") or "").strip()
+        cat = (rec.get("categoria") or "").strip()
+        prod = (rec.get("produto") or "").strip()
+        terminal = (rec.get("terminal") or "").strip()
+        try: qtd = float(str(rec.get("qtd") or "0").replace(",", "."))
+        except ValueError: qtd = 0
+        valor_total = _br_decimal(rec.get("valor"))
+        unit = round(valor_total / qtd, 4) if qtd not in (0, 0.0) else 0.0
+
+        # ID único composto (validado: 0 dups no arquivo de Bragança)
+        det_id = f"ZIG-{tx}-{prod}-{qtd}-{valor_total}-{terminal}"
+
+        out.append({
+            "PedidoId":             tx,
+            "PedidoDetalheId":      det_id,
+            "DataCriacaoBrasilia":  data_iso,
+            "PDV APELIDO":          pdv,
+            "Categoria":            cat,
+            "Produto":              prod,
+            "Quantidade":           str(qtd),
+            "ValorProduto":         str(unit),
+            "Equipamento":          terminal,
+            "_sistema":             "ZIG",
+        })
+    return out
+
+
 def normalizar_produto(nome: str) -> str:
     nome = (nome or "").strip().upper()
     return NORMALIZACOES.get(nome, nome)
@@ -286,7 +448,15 @@ EVENTOS_CONFIG: dict[str, dict] = {
         # `sessoes` vazio = auto-descobre nos dados (ver cacapava-2026 acima).
         "sessoes": set(),
         "pasta": "braganca-paulista-2026",
-        # 1 aba só: classifica BAR vs AMB pelo PDV
+        # Multi-sistema: 25/04 começou MEEP (subpasta meep/), trocou pra ZIG em 26/04
+        # (subpasta zig/). Cada subpasta tem seu leitor e abas próprias.
+        "subpastas": [
+            {"sub": "meep", "sistema": "MEEP", "leitor": "meep",
+             "abas": [("BRAGANÇA", None, "auto")]},
+            {"sub": "zig",  "sistema": "ZIG",  "leitor": "zig",
+             "abas": [(None, None, "auto")]},  # Zig: 1 aba só, lê direto
+        ],
+        # Fallback (compat): se subpastas não existirem, usa xlsx soltos como Meep
         "abas": [("BRAGANÇA", None, "auto")],
         "mapa_pdv": mapa_pdv_braganca,
         "eh_alimentacao_op": lambda op, pdv: eh_alimentacao_braganca(pdv),
@@ -301,9 +471,10 @@ EVENTO_PADRAO = "cacapava-2026"
 # =============================================================================
 # Processamento
 # =============================================================================
-def processar(xlsx_files: list[Path], cfg: dict):
-    """Processa lista de xlsx. cfg = entrada do EVENTOS_CONFIG (mapa_pdv, abas, etc)."""
-    abas_spec = cfg["abas"]                                 # [(sheet_name, grupo_fixo, tipo)]
+def processar(fontes: list, cfg: dict):
+    """Processa lista de fontes (cada uma = (xlsx_files, sistema, leitor, abas_spec)).
+    Sistema/leitor permitem misturar MEEP e ZIG num mesmo evento.
+    cfg = entrada do EVENTOS_CONFIG (mapa_pdv, eh_alimentacao_op, etc)."""
     mapa_pdv = cfg["mapa_pdv"]                              # callable: pdv -> operacao
     eh_alimentacao = cfg["eh_alimentacao_op"]               # callable: (op, pdv) -> bool
     eh_amb_pdv = cfg.get("eh_ambulante_pdv", lambda p: False)  # usado em aba auto
@@ -334,28 +505,49 @@ def processar(xlsx_files: list[Path], cfg: dict):
     # Esses valores NÃO entram em ops_por_data, all_produtos, vendas_min, etc.
     # São usados APENAS pela aba Alimentação (visual/consulta).
     alimentacao_por_data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "valor": 0.0, "categoria": ""})))
+    # Serviços (Bilheteria/Estacionamento/Parques): bucket ISOLADO, paralelo a Alimentação.
+    # Inclui produtos que não são bebida nem comida (ingressos, vagas, brinquedos).
+    servicos_por_data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "valor": 0.0, "categoria": "", "pdv": ""})))
+    # Sistema(s) usados em cada sessão: data_iso → set("MEEP","ZIG"). Vai pro frontend.
+    sistemas_por_sessao = defaultdict(set)
 
     total_linhas = 0
     total_dup = 0
     total_nao_bebida = 0
+    total_servicos = 0
     # Timestamp da última transação processada (qualquer linha válida com data)
     ultima_atualizacao = ""
 
-    for xlsx in xlsx_files:
-        print(f"📄 Processando: {xlsx.name}")
-        for aba_spec_name, grupo_fixo, aba_tipo in abas_spec:
-            # aba_spec_name pode ser str ou list[str] (aliases). Tenta cada um até achar.
-            nomes = [aba_spec_name] if isinstance(aba_spec_name, str) else list(aba_spec_name)
-            rows = []
-            aba = None
-            for n in nomes:
-                rows = read_sheet(xlsx, n)
-                if rows:
-                    aba = n
-                    break
-            if not rows:
-                continue
-            print(f"   Aba {aba} ({aba_tipo}): {len(rows)} linhas (sem header)")
+    # Coleta todas as linhas (formato Meep) de todas as fontes, carimbadas com sistema.
+    # Leitor "zig" produz dicts já no formato Meep + _sistema=ZIG (read_xlsx_zig).
+    # Leitor "meep" usa read_sheet por aba; aba_spec define grupo_fixo e tipo.
+    for xlsx_files, sistema, leitor, abas_spec in fontes:
+      for xlsx in xlsx_files:
+        print(f"📄 [{sistema}] Processando: {xlsx.name}")
+        if leitor == "zig":
+            zig_rows = read_xlsx_zig(xlsx)
+            print(f"   1 aba Zig: {len(zig_rows)} linhas válidas (Efetivada/Operacional)")
+            iter_abas = [(zig_rows, None, "auto")]
+        else:
+            iter_abas = []
+            for aba_spec_name, grupo_fixo, aba_tipo in abas_spec:
+                nomes = [aba_spec_name] if isinstance(aba_spec_name, str) else list(aba_spec_name)
+                rows = []
+                aba = None
+                for n in nomes:
+                    rows = read_sheet(xlsx, n)
+                    if rows:
+                        aba = n
+                        break
+                if not rows:
+                    continue
+                # Carimba sistema MEEP em cada linha (Zig já vem carimbado)
+                for r in rows:
+                    r["_sistema"] = "MEEP"
+                print(f"   Aba {aba} ({aba_tipo}): {len(rows)} linhas (sem header)")
+                iter_abas.append((rows, grupo_fixo, aba_tipo))
+
+        for rows, grupo_fixo, aba_tipo in iter_abas:
             for r in rows:
                 total_linhas += 1
                 pedido_det_id = (r.get(COL_PEDIDO_DET_ID) or "").strip()
@@ -370,6 +562,8 @@ def processar(xlsx_files: list[Path], cfg: dict):
                 data_iso = sessao_de(datetime_str)
                 if not data_iso:
                     continue
+                # Carimba sistema usado nesta sessão (vai pro frontend)
+                sistemas_por_sessao[data_iso].add(r.get("_sistema", "MEEP"))
                 hora_str = datetime_str[11:13] if len(datetime_str) >= 13 else None
                 # Atualiza timestamp da última transação válida (string compare é seguro
                 # porque datetime_str vem em ISO `YYYY-MM-DD HH:MM:SS...`).
@@ -388,6 +582,21 @@ def processar(xlsx_files: list[Path], cfg: dict):
                 try: unit = float(r.get(COL_VALOR_PRODUTO) or 0)
                 except: unit = 0
                 terminal = (r.get(COL_EQUIPAMENTO) or "").strip()
+
+                # SERVIÇOS: roteamento ANTES do filtro de bebida (captura ingressos,
+                # estacionamento, parques que não são nem bebida nem comida).
+                # Cancelamentos (qtd<0) entram normais e zeram naturalmente na soma.
+                if qtd != 0 and produto:
+                    grupo_servico = classificar_servico(pdv, cat, produto)
+                    if grupo_servico:
+                        valor_serv = round(qtd * unit, 2)
+                        sb = servicos_por_data[data_iso][grupo_servico][produto]
+                        sb["qtd"] += qtd
+                        sb["valor"] += valor_serv
+                        sb["categoria"] = cat
+                        sb["pdv"] = pdv
+                        total_servicos += 1
+                        continue
 
                 if qtd <= 0 or not produto:
                     continue
@@ -492,9 +701,11 @@ def processar(xlsx_files: list[Path], cfg: dict):
     print(f"\n📊 Totais processamento:")
     print(f"   Linhas lidas:        {total_linhas}")
     print(f"   Linhas duplicadas:   {total_dup}  (dedup via PedidoDetalheId)")
+    print(f"   Serviços (rota):     {total_servicos}  (Bilheteria/Estacionamento/Parques)")
     print(f"   Ignoradas (não-beb): {total_nao_bebida}")
     print(f"   IDs únicos:          {len(ids_vistos)}")
     print(f"   Sessões:             {sorted(ops_por_data.keys())}")
+    print(f"   Sistemas/sessão:     " + ", ".join(f"{k}={sorted(v)}" for k,v in sorted(sistemas_por_sessao.items())))
 
     # Normaliza estruturas pra JSON
     def calcular_preco_cheio(hist):
@@ -630,7 +841,31 @@ def processar(xlsx_files: list[Path], cfg: dict):
                     "valor": round(d["valor"], 2),
                 })
             alimentacao_out[data_iso][op] = arr
-    return data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, pedidos_alim_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out, ultima_atualizacao
+
+    # Serviços (Bilheteria/Estacionamento/Parques): bucket isolado, paralelo a Alimentação
+    servicos_out = {}
+    for data_iso, por_grp in servicos_por_data.items():
+        servicos_out[data_iso] = {}
+        for grp, prods in por_grp.items():
+            arr = []
+            for prod, d in sorted(prods.items()):
+                q = d["qtd"]
+                arr.append({
+                    "produto": prod,
+                    "categoria": d["categoria"],
+                    "pdv": d["pdv"],
+                    "qtd": int(q) if q == int(q) else q,
+                    "valor": round(d["valor"], 2),
+                })
+            servicos_out[data_iso][grp] = arr
+
+    # Sistema(s) por sessão: vira sorted list pra ser JSON-serializável
+    sistemas_out = {sess: sorted(list(s)) for sess, s in sistemas_por_sessao.items()}
+
+    return (data_list, dict(dpd), ops_out, amb_out, pedidos_out, pedidos_bar_out,
+            pedidos_amb_out, pedidos_alim_out, vendas_hora_out, vendas_min_out,
+            vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out,
+            servicos_out, sistemas_out, ultima_atualizacao)
 
 
 # =============================================================================
@@ -689,7 +924,39 @@ def _evento_vazio(nome: str, sessoes: list) -> dict:
         "vendas_min_op_prod": {},
         "terminais_min": {},
         "alimentacao": {},
+        "servicos": {},
+        "sistemas": {},
     }
+
+
+def _coletar_fontes(cfg: dict, evt_id: str) -> list:
+    """Devolve lista de tuplas (xlsx_files, sistema, leitor, abas) pra um evento.
+    - Se evento tem `subpastas`: usa cada subpasta com seu sistema/leitor/abas.
+    - Senão: usa pasta principal como Meep (compat).
+    - Fallback Caçapava: xlsx soltos em PLANILHAS_DIR.
+    """
+    pasta = PLANILHAS_DIR / cfg["pasta"]
+    fontes = []
+    if "subpastas" in cfg:
+        for sub in cfg["subpastas"]:
+            p = pasta / sub["sub"]
+            if p.exists():
+                xlsxs = sorted(p.glob("*.xlsx"))
+                if xlsxs:
+                    fontes.append((xlsxs, sub["sistema"], sub["leitor"], sub["abas"]))
+        if fontes:
+            return fontes
+    # Sem subpastas (ou subpastas vazias): tenta pasta principal como Meep
+    if pasta.exists():
+        xlsxs = sorted(pasta.glob("*.xlsx"))
+        if xlsxs:
+            return [(xlsxs, "MEEP", "meep", cfg["abas"])]
+    # Fallback compat (Caçapava antigo)
+    if evt_id == EVENTO_PADRAO:
+        xlsxs = sorted(PLANILHAS_DIR.glob("*.xlsx"))
+        if xlsxs:
+            return [(xlsxs, "MEEP", "meep", cfg["abas"])]
+    return []
 
 
 def main():
@@ -698,32 +965,31 @@ def main():
 
     eventos_out = {}
     for evt_id, cfg in EVENTOS_CONFIG.items():
-        pasta = PLANILHAS_DIR / cfg["pasta"]
-        xlsx_files = sorted(pasta.glob("*.xlsx")) if pasta.exists() else []
-
-        # Fallback pro evento padrão: se a pasta específica não existe, procura
-        # xlsx soltos em PLANILHAS_DIR (compat com instalação pré-multi-evento)
-        if not xlsx_files and evt_id == EVENTO_PADRAO:
-            xlsx_files = sorted(PLANILHAS_DIR.glob("*.xlsx"))
-
-        if not xlsx_files:
-            print(f"⏭️  {evt_id}: sem planilhas em {pasta} — evento fica como placeholder vazio")
+        fontes = _coletar_fontes(cfg, evt_id)
+        if not fontes:
+            print(f"⏭️  {evt_id}: sem planilhas em {PLANILHAS_DIR / cfg['pasta']} — placeholder vazio")
             eventos_out[evt_id] = _evento_vazio(cfg["nome"], cfg["sessoes"])
             continue
 
         print(f"\n🎪 Processando evento: {cfg['nome']} ({evt_id})")
+        for xlsxs, sistema, leitor, _abas in fontes:
+            print(f"   🔌 Fonte: {sistema} ({leitor}) — {len(xlsxs)} arquivo(s)")
         SESSOES_VALIDAS = set(cfg["sessoes"])
-        data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out, pedidos_amb_out, pedidos_alim_out, vendas_hora_out, vendas_min_out, vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out, ultima_atualizacao = processar(xlsx_files, cfg)
+        (data_list, dpd, ops_out, amb_out, pedidos_out, pedidos_bar_out,
+         pedidos_amb_out, pedidos_alim_out, vendas_hora_out, vendas_min_out,
+         vendas_min_op_prod_out, terminais_por_min_out, alimentacao_out,
+         servicos_out, sistemas_out, ultima_atualizacao) = processar(fontes, cfg)
         print(f"   Pedidos únicos:      {sum(pedidos_out.values())} ({pedidos_out})")
         print(f"   Pedidos BAR:         {sum(pedidos_bar_out.values())} ({pedidos_bar_out})")
         print(f"   Pedidos AMB:         {sum(pedidos_amb_out.values())} ({pedidos_amb_out})")
         print(f"   Pedidos ALIM:        {sum(pedidos_alim_out.values())} ({pedidos_alim_out})")
         print(f"   Produtos:            {len(data_list)}  · OPS: {sum(len(v) for v in ops_out.values())} linhas")
+        print(f"   Serviços (sessão):   {[(s, list(g.keys())) for s,g in servicos_out.items()]}")
         print(f"   Última transação:    {ultima_atualizacao}")
         # Sessões: união do que está na config (filtro) com o que apareceu nos
         # dados (auto-descoberta). Garante que ingestão incremental sem editar
         # `sessoes` na config ainda liste os dias no frontend.
-        sessoes_descobertas = set(cfg["sessoes"]) | set(pedidos_out.keys())
+        sessoes_descobertas = set(cfg["sessoes"]) | set(pedidos_out.keys()) | set(servicos_out.keys())
         eventos_out[evt_id] = {
             "nome": cfg["nome"],
             "sessoes": sorted(sessoes_descobertas),
@@ -741,6 +1007,8 @@ def main():
             "vendas_min_op_prod": vendas_min_op_prod_out,
             "terminais_min": terminais_por_min_out,
             "alimentacao": alimentacao_out,
+            "servicos": servicos_out,
+            "sistemas": sistemas_out,
         }
 
     injetar_no_html(eventos_out)

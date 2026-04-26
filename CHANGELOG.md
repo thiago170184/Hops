@@ -7,6 +7,30 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.7.0] — 2026-04-26
+
+### Added
+- **Suporte multi-sistema (MEEP + ZIG)**: IDH agora ingere planilhas dos dois sistemas no mesmo evento. Bragança Paulista trocou de Meep para Zig em 26/04 (problemas operacionais Meep ontem). Estrutura: `hops-planilhas/braganca-paulista-2026/{meep,zig}/*.xlsx` — detecção do sistema pela subpasta.
+- **Leitor Zig (`read_xlsx_zig`)**: parser do XLSX "Lista de Transações" da Zig. Converte serial Excel → ISO datetime, calcula unitário a partir do total da linha, gera ID composto (`Tx+Produto+Qtd+Valor+Terminal`) já que a Zig não tem `PedidoDetalheId`. Devolve dicts no formato Meep — pipeline de agregação não muda.
+- **Bucket SERVIÇOS** (paralelo a Alimentação): 3 grupos — `BILHETERIA` (ingressos/cortesias/promocional), `ESTACIONAMENTO`, `PARQUES` (parque de diversão). Roteamento ANTES do filtro de bebida, captura por PDV (`ESTACIONAMENTO`, `PARQUE DIVERSAO`) e categoria (`Outros`).
+- **Aba Serviços** no menu (entre Alimentação e Cardápio): cards por grupo com produto + PDV + qtde + valor.
+- **KPI Serviços** no Dashboard: faturamento + nº itens (não compõe o total de bebidas).
+- **Badge "Origem dos Dados"** no header agora é dinâmico — mostra sistema(s) das sessões selecionadas (`MEEP`, `ZIG` ou `MEEP + ZIG`).
+- **Carimbo de sistema por sessão** no JSON do evento (`sistemas`): `{data_iso: ["MEEP","ZIG"]}`. Permite UI saber qual fonte gerou cada sessão.
+
+### Changed
+- **`build-data.py`** refatorado: cada evento pode ter `subpastas` com leitores distintos. Caçapava continua igual (compat). Bragança ganhou 2 fontes (`meep/` + `zig/`).
+- **Mapa PDV→Operação Bragança** ampliado: aceita prefixos Meep (`FRONT.`, `INTENSE.`, `CORPORATIVO.`, `CAIXA.AMB`) e Zig (`AMBULANTES.`, `ALIMENTACAO.`).
+- **`CATEGORIAS_BEBIDAS`** ganhou `BEBIDA` (singular) — Zig usa singular onde Meep usa plural.
+- **`NORMALIZACOES`** expandido pra cobrir variações Zig: `AMESTEL`, `CERV AMSTEL`, `CERVEJA AMS 350` → `CERVEJA AMSTEL`. `CERVEJA HEI 350` → `CERVEJA HEINEKEN`.
+
+### Validated
+- Bragança 25/04 sessão Zig (R$ 391.746 esperado vs R$ 392.857 calculado, diff < 0,3% por arredondamento de unitário).
+- Comida Zig descartada (R$ 215k) — fora de escopo do relatório de bebidas.
+- Diferença vs Resumo Financeiro Zig (R$ 615k vs R$ 697k) explicada pelos 20min faltantes na extração + ritmo de pico (~R$ 4-5k/min).
+
+---
+
 ## [1.6.0] — 2026-04-25
 
 ### Added
