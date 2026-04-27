@@ -7,6 +7,13 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.8.3] — 2026-04-27
+
+### Changed
+- **Data refresh Bragança Zig — manhã 27/04**: novo CSV consolidado (47.177 linhas Zig válidas, +5.305 vs v1.8.2). Última transação 27/04 03:41:18. Sessão 2026-04-26 fecha completa (madrugada incluída). Total IDs únicos no evento: 72.135. Pedidos por sessão: 24/04=9.659 · 25/04=11.648 · 26/04=5.157.
+
+---
+
 ## [1.8.2] — 2026-04-26
 
 ### Changed
