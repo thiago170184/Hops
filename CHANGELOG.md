@@ -7,6 +7,13 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.8.2] — 2026-04-26
+
+### Changed
+- **Data refresh Bragança Zig — noite 26/04**: novo CSV consolidado (41.872 linhas, +10k vs versão anterior). Última transação 26/04 22:00:53. Sessão 2026-04-26 estreia com R$ 160k. Total Bragança evento agora R$ 1.874.856.
+
+---
+
 ## [1.8.1] — 2026-04-26
 
 ### Changed
