@@ -7,6 +7,14 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.8.4] — 2026-04-28
+
+### Changed
+- **Data refresh Caçapava — fechamento do evento**: novo `transacional.xlsx` GERAL ingressado. Caçapava ganha sessão **2026-04-25** (madrugada após dia 24), última transação **26/04 04:25:11**. Pedidos por sessão: 17/04=6.766 · 18/04=10.406 · 24/04=11.277 · 25/04=535. Total **28.984 pedidos únicos** (BAR 19.363 · AMB 9.621 · ALIM 1.175). 50.033 IDs únicos pós-dedup, 80 produtos, 26 linhas OPS.
+- **`PLANILHAS_DIR`** movido de `~/Downloads/hops-planilhas` → `~/Documents/hops-planilhas`. Motivo: macOS TCC bloqueia listdir em `~/Downloads/` quando o Python roda via Claude Code (sandbox). Documents é acessível e mantém o fluxo de ingestão funcionando dentro e fora do CC.
+
+---
+
 ## [1.8.3] — 2026-04-27
 
 ### Changed

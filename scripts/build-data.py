@@ -31,7 +31,7 @@ from pathlib import Path
 # Configuração
 # =============================================================================
 ROOT = Path(__file__).resolve().parent.parent
-PLANILHAS_DIR = Path("/Users/thiagomonteiro/Downloads/hops-planilhas")
+PLANILHAS_DIR = Path("/Users/thiagomonteiro/Documents/hops-planilhas")
 HTML_PATH = ROOT / "index.html"
 
 NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
