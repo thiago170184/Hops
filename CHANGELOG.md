@@ -7,6 +7,28 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.9.0] — 2026-04-29
+
+### Added
+- **Controle primário de estoque (Bragança)**: novo módulo de mapeamento PDV→produto de estoque com 2 abas no dashboard.
+  - **Composição**: tabela com 69 produtos vendidos vinculados a 37 produtos de estoque catalogados em 15 categorias (cervejas, cachaças, gins, RTDs, refrigerantes, etc). Tipos de relação: 1:1, 1:N, 1:1/N, categoria. Suporta filtro (todos/controlados/não-controlados) e busca.
+  - **Estoque**: consumo consolidado por categoria (agrupado), ordenado por total. Bragança encerrou com 17 alvos com consumo: Amstel 27.260 unid, Heineken 10.408, Água 11.818 (categoria), Energético 8.769, Refrigerante 3.770, Tanqueray 681,64 (1L+doses), Old Parr 729 garrafas, Ketel One 825, Smirnoff 379, Red Label 83, RTDs Moscow Mule 503/Watermelon 213/Caipirinha 60.
+- **Sugestão IA de vínculos** via Anthropic Claude Sonnet 4.6: script `scripts/sugerir-composicoes.py` lê produtos vendidos por evento e propõe composição (tipo, vínculos, fração, score). Custo ~USD 0,30 pra 144 produtos (Caçapava + Bragança).
+- **Regra "categoria contamina"**: se algum produto no evento foi mapeado como categoria genérica (ex: "REFRIGERANTE"), todos da mesma categoria de estoque viram bucket categoria automaticamente. Aplicada via `scripts/promover-sugestoes.py` ao migrar de sugestões pra composições.
+- Novos arquivos:
+  - `data/produtos_estoque.json` (catálogo global, 37 produtos)
+  - `data/composicoes.json` (vínculos por evento; só Bragança populado)
+  - `scripts/extrair-vendidos.py`, `sugerir-composicoes.py`, `promover-sugestoes.py`, `review-sugestoes.py`
+
+### Changed
+- **`build-data.py`**: carrega composições+catálogo, calcula consumo agregado e injeta `composicao` + `consumo_estoque` em `EVENTOS[evtId]`. Sem impacto nos dados existentes.
+- **`index.html`**: 2 abas novas no menu (Composição, Estoque) + estilos + render functions hookadas em `setTab`.
+
+### Pendente
+- Caçapava ainda não promovida pra composições (só sugestão IA gerada). Aguardando expansão do catálogo de estoque (Orloff, Ballantines, Tequila, Conhaque, Água de Coco) ou decisão de manter `controla=false`.
+
+---
+
 ## [1.8.4] — 2026-04-28
 
 ### Changed

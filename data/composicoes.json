@@ -1,0 +1,1010 @@
+{
+  "cacapava-2026": {},
+  "braganca-paulista-2026": {
+    "AGUA": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "agua-fontana-510",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "AGUA 510 ML": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "agua-fontana-510",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "AGUA 510 ML  (DUPLICADO)": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "agua-fontana-510",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "BALLA 10YO ON THE ROCKS (TEOR ALCOOLICO 8%)": {
+      "controla": false,
+      "tipo": "1:1",
+      "vinculos": [],
+      "score": 0.3,
+      "obs": "Produto RTD/drink pronto 'Balla 10YO' nao encontrado no catalogo de estoque. Sem vinculo possivel."
+    },
+    "BALLA DE COCO (TEOR ALCOOLICO 8%)": {
+      "controla": false,
+      "tipo": "1:1",
+      "vinculos": [],
+      "score": 0.3,
+      "obs": "Produto RTD/drink pronto 'Balla de Coco' nao encontrado no catalogo de estoque. Sem vinculo possivel."
+    },
+    "BARRIL 50L AMST": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "choop-amstel-50l",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.95,
+      "obs": "Barril 50L Amstel = CHOOP BARRIL AMSTEL 50L."
+    },
+    "CAMPARI": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "campari-998",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.85,
+      "obs": "Vendido como garrafa inteira em categoria GARRAFAS. Fracao=1 (garrafa inteira). Se for dose, ajustar para 0.0588."
+    },
+    "CERVEJA AMSTEL": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "amstel-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.95,
+      "obs": "Match direto com CERVEJA AMSTEL 350 ML."
+    },
+    "CERVEJA HEINEKEN": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "heineken-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.95,
+      "obs": "Match direto com CERVEJA HEINEKEN 350 ML."
+    },
+    "CERVEJA HEINEKEN Z": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "heineken-zero-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.92,
+      "obs": "'Z' abreviacao de Zero. Match com CERVEJA HEINEKEN 0% 350 ML."
+    },
+    "COMBO 10 AMSTEL": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "amstel-350",
+          "tipo_alvo": "produto",
+          "fracao": 10
+        }
+      ],
+      "score": 0.93,
+      "obs": "Combo de 10 unidades de Amstel 350ml."
+    },
+    "COMBO 10 HEINEKEN": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "heineken-350",
+          "tipo_alvo": "produto",
+          "fracao": 10
+        }
+      ],
+      "score": 0.93,
+      "obs": "Combo de 10 unidades de Heineken 350ml."
+    },
+    "DK CAIPIRINH": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "rtd-caipirinha-maracuja-330",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.75,
+      "obs": "Abrev. de Drink Caipirinha. Melhor vinculo disponivel: RTD CAIPIRINHA MARACUJA 330 ML. Pode ser drink manipulado; revisar."
+    },
+    "DK WATERMELO": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "rtd-watermelon-330",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.82,
+      "obs": "Abrev. de Drink Watermelon. Match com RTD WATERMELON SUGAR 330 ML."
+    },
+    "DRINK MOSC MULE": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "rtd-moscow-mule-330",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.85,
+      "obs": "Abrev. de Drink Moscow Mule. Match com RTD MOSCOW MULE 330 ML."
+    },
+    "DRINKSSI CAIP": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "rtd-caipirinha-maracuja-330",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.78,
+      "obs": "Abrev. de Drink Caipirinha (marca Drinkssi). Match com RTD CAIPIRINHA MARACUJA 330 ML."
+    },
+    "DRINKSSI MOSCOW": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "rtd-moscow-mule-330",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.85,
+      "obs": "Drink Moscow Mule Drinkssi. Match com RTD MOSCOW MULE 330 ML."
+    },
+    "DRINKSSI MOSCOW MULE": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "rtd-moscow-mule-330",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.88,
+      "obs": "Match com RTD MOSCOW MULE 330 ML."
+    },
+    "DRINKSSI WATE": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "rtd-watermelon-330",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.82,
+      "obs": "Abrev. de Watermelon. Match com RTD WATERMELON SUGAR 330 ML."
+    },
+    "DRINKSSI WATER MELON": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "rtd-watermelon-330",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.88,
+      "obs": "Match com RTD WATERMELON SUGAR 330 ML."
+    },
+    "ENERGETICO": {
+      "controla": true,
+      "tipo": "categoria",
+      "vinculos": [
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 1
+        }
+      ],
+      "score": 0.7,
+      "obs": "Nome generico sem marca/sabor. Usa categoria ENERGETICO. Impacta granularidade dos Red Bulls com sabor no evento."
+    },
+    "GUARANA": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "guarana-antarctica-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "GUARANA ZERO": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "guarana-antarctica-zero-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "JW R L 4 R B": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "red-label-1l",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 4
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "JW R L 4 R B S": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "red-label-1l",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 4
+        }
+      ],
+      "score": 0.8,
+      "obs": "Variacao de JW Red Label + 4 Red Bull Sabores. Mesmo vinculo do anterior."
+    },
+    "JW RED LABEL + 4 RED BULL SABORES": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "red-label-1l",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 4
+        }
+      ],
+      "score": 0.9,
+      "obs": "1 garrafa RED LABEL 1L + 4 Red Bull (sabores variados, categoria ENERGETICO)."
+    },
+    "KETEL ONE  + 4 RED BULL (SABORES) OU SUCO": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "ketel-one-1l",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 4
+        }
+      ],
+      "score": 0.85,
+      "obs": "1 garrafa Ketel One + 4 Red Bull sabores ou suco. Suco nao especificado; vinculando apenas Ketel One + 4 energeticos. Revisar se suco tambem deve ser contabilizado."
+    },
+    "KETEL ONE & COCA COLA": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "ketel-one-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.055
+        },
+        {
+          "alvo": "pepsi-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "KETEL ONE & RED BULL": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "ketel-one-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.055
+        },
+        {
+          "alvo": "redbull-regular-250",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "KETEL ONE & REFRIGERANTE": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "ketel-one-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.055
+        },
+        {
+          "alvo": "REFRIGERANTE",
+          "tipo_alvo": "categoria",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "KETEL ONE E SUCO": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "ketel-one-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.055
+        },
+        {
+          "alvo": "SUCO",
+          "tipo_alvo": "categoria",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "MOSCOW MULE": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "rtd-moscow-mule-330",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 0.8,
+      "obs": "Pode ser RTD pronto ou drink manipulado. Melhor match: RTD MOSCOW MULE 330 ML. Revisar se e drink manipulado (Ketel One + tonica)."
+    },
+    "OLD PA 4 RE BU": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "old-parr-1l",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 4
+        }
+      ],
+      "score": 0.82,
+      "obs": "Abrev. Old Parr + 4 Red Bull. 1 garrafa Old Parr 1L + 4 energeticos."
+    },
+    "OLD PA ON TH RO": {
+      "controla": true,
+      "tipo": "1:1/N",
+      "vinculos": [
+        {
+          "alvo": "old-parr-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.055
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "OLD PAR RED BUL": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "old-parr-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.055
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 4
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "OLD PARR & RED BULL": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "old-parr-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.055
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 4
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "OLD PARR + 4  RED BULL SABORES": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "old-parr-1l",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 4
+        }
+      ],
+      "score": 0.9,
+      "obs": "1 garrafa Old Parr 1L + 4 Red Bull sabores (categoria ENERGETICO)."
+    },
+    "OLD PARR ON THE ROCKS": {
+      "controla": true,
+      "tipo": "1:1/N",
+      "vinculos": [
+        {
+          "alvo": "old-parr-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.055
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "PEPSI": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "pepsi-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "PEPSI BLACK": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "pepsi-black-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "RED BULL": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "redbull-regular-250",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "RED BULL MELANCIA": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "redbull-melancia-250",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "RED BULL REGULAR": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "redbull-regular-250",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "RED BULL SUGAR F": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "redbull-zero-250",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "RED BULL TROPICAL": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "redbull-tropical-250",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "REDBULL MELA": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "redbull-melancia-250",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "REDBULL REGULAR": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "redbull-regular-250",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "REDBULL SUGAR": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "redbull-zero-250",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "REDBULL TROP": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "redbull-tropical-250",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "REFRI GUARANA": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "guarana-antarctica-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "REFRI PEPSI": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "pepsi-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "REFRI PEPSI BLACK": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "pepsi-black-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "REFRIGERANTE": {
+      "controla": true,
+      "tipo": "categoria",
+      "vinculos": [
+        {
+          "alvo": "REFRIGERANTE",
+          "tipo_alvo": "categoria",
+          "fracao": 1
+        }
+      ],
+      "score": 0.7,
+      "obs": "Nome generico. Usa categoria REFRIGERANTE. Impacta granularidade dos refrigerantes com marca no evento."
+    },
+    "SMIRNOFF + 4 RED BULL SABORES OU SUCO": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "smirnoff-1l",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 4
+        }
+      ],
+      "score": 0.85,
+      "obs": "1 garrafa Smirnoff 1L + 4 Red Bull sabores (ou suco). Suco nao vinculado por falta de especificacao."
+    },
+    "SMIRNOFF 4 R B": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "smirnoff-1l",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 4
+        }
+      ],
+      "score": 0.82,
+      "obs": "Abrev. Smirnoff + 4 Red Bull. 1 garrafa + 4 energeticos."
+    },
+    "SMIRNOFF REDB": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "smirnoff-1l",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 1
+        }
+      ],
+      "score": 0.8,
+      "obs": "Abrev. Smirnoff + Red Bull. Assume 1 garrafa + 1 Red Bull. Revisar quantidade. | regra-categoria aplicada: ENERGETICO"
+    },
+    "SUCO": {
+      "controla": true,
+      "tipo": "categoria",
+      "vinculos": [
+        {
+          "alvo": "SUCO",
+          "tipo_alvo": "categoria",
+          "fracao": 1
+        }
+      ],
+      "score": 0.7,
+      "obs": "Nome generico sem sabor. Usa categoria SUCO. Impacta granularidade dos sucos com sabor no evento."
+    },
+    "SUCO ( MORANGO COM LICHIA  E MAÇÃ VERDE)": {
+      "controla": true,
+      "tipo": "categoria",
+      "vinculos": [
+        {
+          "alvo": "SUCO",
+          "tipo_alvo": "categoria",
+          "fracao": 1
+        }
+      ],
+      "score": 0.78,
+      "obs": "Produto com dois sabores possiveis (morango/lichia ou maca verde). Existe SUCO generico no evento, forcando categoria. Poderia ser suco-morango-lichia-330 ou suco-maca-verde-330."
+    },
+    "TANQUERAY & TONIC (TEOR ALCOOLICO 10,9%)": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "tanqueray-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.071
+        },
+        {
+          "alvo": "agua-tonica-schweppes-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "TANQUERAY + 4 TONICA": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "tanqueray-1l",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        },
+        {
+          "alvo": "agua-tonica-schweppes-350",
+          "tipo_alvo": "produto",
+          "fracao": 4
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "TANQUERAY 4 TON": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "tanqueray-1l",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        },
+        {
+          "alvo": "agua-tonica-schweppes-350",
+          "tipo_alvo": "produto",
+          "fracao": 4
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "TANQUERAY E RED BULL TROPICAL": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "tanqueray-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.071
+        },
+        {
+          "alvo": "redbull-tropical-250",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "TANQUERAY R B T": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "tanqueray-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.071
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "TANQUERAY TONIC": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "tanqueray-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.071
+        },
+        {
+          "alvo": "agua-tonica-schweppes-350",
+          "tipo_alvo": "produto",
+          "fracao": 4
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "TONICA SCHEWEPPES": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "agua-tonica-schweppes-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "TONICA SCHW": {
+      "controla": true,
+      "tipo": "1:1",
+      "vinculos": [
+        {
+          "alvo": "agua-tonica-schweppes-350",
+          "tipo_alvo": "produto",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "VODKA K O R B": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "ketel-one-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.055
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "VODKA KE ON RE": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "ketel-one-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.055
+        },
+        {
+          "alvo": "ENERGETICO",
+          "tipo_alvo": "categoria",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    },
+    "VODKA KE ON SU": {
+      "controla": true,
+      "tipo": "1:N",
+      "vinculos": [
+        {
+          "alvo": "ketel-one-1l",
+          "tipo_alvo": "produto",
+          "fracao": 0.055
+        },
+        {
+          "alvo": "SUCO",
+          "tipo_alvo": "categoria",
+          "fracao": 1
+        }
+      ],
+      "score": 1,
+      "obs": "editado manualmente"
+    }
+  }
+}

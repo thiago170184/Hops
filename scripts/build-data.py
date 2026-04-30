@@ -33,6 +33,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PLANILHAS_DIR = Path("/Users/thiagomonteiro/Documents/hops-planilhas")
 HTML_PATH = ROOT / "index.html"
+DATA_DIR = ROOT / "data"
+PRODUTOS_ESTOQUE_PATH = DATA_DIR / "produtos_estoque.json"
+COMPOSICOES_PATH = DATA_DIR / "composicoes.json"
 
 NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 
@@ -1069,7 +1072,95 @@ def injetar_no_html(eventos_out: dict):
         print("⚠️  placeholder `const EVENTOS = {};` não encontrado — adicione em index.html")
         return
 
+    # Injeta tambem o catalogo de produtos de estoque (pro modal de edicao)
+    if PRODUTOS_ESTOQUE_PATH.exists():
+        produtos = json.loads(PRODUTOS_ESTOQUE_PATH.read_text(encoding="utf-8"))
+        payload_est = json.dumps(produtos, ensure_ascii=False)
+        novo_est = f"const PRODUTOS_ESTOQUE = {payload_est};"
+        pattern_est = r"const PRODUTOS_ESTOQUE = \[.*?\];"
+        if re.search(pattern_est, html, flags=re.DOTALL):
+            html = re.sub(pattern_est, lambda m: novo_est, html, count=1, flags=re.DOTALL)
+        else:
+            print("⚠️  placeholder `const PRODUTOS_ESTOQUE = [];` nao encontrado em index.html")
+
     HTML_PATH.write_text(html, encoding="utf-8")
+
+
+# =============================================================================
+# Estoque (composições + consumo agregado)
+# =============================================================================
+def carregar_composicoes():
+    """Le data/produtos_estoque.json e data/composicoes.json.
+
+    Retorna (produtos_estoque_index, composicoes_por_evento).
+      - produtos_estoque_index: {id: {id, categoria, nome}}
+      - composicoes_por_evento: {evt_id: {nome_vendido_upper: regra}}
+    """
+    if not PRODUTOS_ESTOQUE_PATH.exists() or not COMPOSICOES_PATH.exists():
+        return {}, {}
+    estoque = json.loads(PRODUTOS_ESTOQUE_PATH.read_text(encoding="utf-8"))
+    estoque_index = {p["id"]: p for p in estoque}
+    composicoes = json.loads(COMPOSICOES_PATH.read_text(encoding="utf-8"))
+    # Normaliza chaves (nome do produto vendido) pra UPPER, garante consistencia
+    comps_norm = {}
+    for evt_id, sugs in composicoes.items():
+        comps_norm[evt_id] = {(k or "").strip().upper(): v for k, v in sugs.items()}
+    return estoque_index, comps_norm
+
+
+def calcular_consumo_estoque(data_list, dpd, composicoes_evento, estoque_index):
+    """Soma qtd_vendida x fracao por alvo (produto ou categoria de estoque).
+
+    Retorna dict {key: {tipo, alvo, nome, categoria, total}}, onde key e
+    "produto::<id>" ou "categoria::<NOME>". Tambem retorna lista de produtos
+    vendidos sem composicao (pra debug/cobertura).
+    """
+    if not composicoes_evento or not estoque_index:
+        return {}, []
+
+    nome_por_id = {str(p["id"]): (p.get("nome") or "").strip().upper() for p in data_list}
+    qtd_por_nome = defaultdict(float)
+    for _data, by_id in dpd.items():
+        for pid, qtd in by_id.items():
+            nome = nome_por_id.get(str(pid), "")
+            if nome:
+                qtd_por_nome[nome] += float(qtd or 0)
+
+    consumo = {}
+    sem_composicao = []
+    for nome_vendido, qtd_total in qtd_por_nome.items():
+        comp = composicoes_evento.get(nome_vendido)
+        if not comp:
+            sem_composicao.append(nome_vendido)
+            continue
+        if not comp.get("controla"):
+            continue
+        for v in comp.get("vinculos", []) or []:
+            alvo = v.get("alvo")
+            tipo_alvo = v.get("tipo_alvo")
+            fracao = float(v.get("fracao", 1) or 0)
+            if not alvo or not tipo_alvo:
+                continue
+            key = f"{tipo_alvo}::{alvo}"
+            entry = consumo.setdefault(key, {
+                "tipo": tipo_alvo,
+                "alvo": alvo,
+                "nome": alvo,
+                "categoria": alvo if tipo_alvo == "categoria" else "",
+                "total": 0.0,
+            })
+            if tipo_alvo == "produto":
+                p = estoque_index.get(alvo)
+                if p:
+                    entry["nome"] = p["nome"]
+                    entry["categoria"] = p["categoria"]
+            entry["total"] += qtd_total * fracao
+
+    # Arredonda totais pra 4 casas (evita ruido de float)
+    for entry in consumo.values():
+        entry["total"] = round(entry["total"], 4)
+
+    return consumo, sorted(sem_composicao)
 
 
 # =============================================================================
@@ -1096,6 +1187,8 @@ def _evento_vazio(nome: str, sessoes: list) -> dict:
         "alimentacao": {},
         "servicos": {},
         "sistemas": {},
+        "composicao": {},
+        "consumo_estoque": {},
     }
 
 
@@ -1135,6 +1228,11 @@ def main():
     PLANILHAS_DIR.mkdir(parents=True, exist_ok=True)
     global SESSOES_VALIDAS
 
+    estoque_index, composicoes_por_evento = carregar_composicoes()
+    if estoque_index:
+        print(f"📦 Estoque carregado: {len(estoque_index)} produtos no catalogo, "
+              f"{sum(len(v) for v in composicoes_por_evento.values())} composicoes")
+
     eventos_out = {}
     for evt_id, cfg in EVENTOS_CONFIG.items():
         fontes = _coletar_fontes(cfg, evt_id)
@@ -1162,6 +1260,15 @@ def main():
         # dados (auto-descoberta). Garante que ingestão incremental sem editar
         # `sessoes` na config ainda liste os dias no frontend.
         sessoes_descobertas = set(cfg["sessoes"]) | set(pedidos_out.keys()) | set(servicos_out.keys())
+        composicao_evt = composicoes_por_evento.get(evt_id, {})
+        consumo, sem_comp = calcular_consumo_estoque(
+            data_list, dpd, composicao_evt, estoque_index
+        )
+        if composicao_evt:
+            controlados = sum(1 for c in composicao_evt.values() if c.get("controla"))
+            print(f"   Estoque:             {controlados}/{len(composicao_evt)} produtos controlados, "
+                  f"{len(consumo)} alvos com consumo, {len(sem_comp)} sem composicao")
+
         eventos_out[evt_id] = {
             "nome": cfg["nome"],
             "sessoes": sorted(sessoes_descobertas),
@@ -1181,6 +1288,8 @@ def main():
             "alimentacao": alimentacao_out,
             "servicos": servicos_out,
             "sistemas": sistemas_out,
+            "composicao": composicao_evt,
+            "consumo_estoque": consumo,
         }
 
     injetar_no_html(eventos_out)

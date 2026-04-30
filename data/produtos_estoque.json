@@ -1,0 +1,53 @@
+[
+  {"id": "amstel-350", "categoria": "CERVEJA", "nome": "CERVEJA AMSTEL 350 ML"},
+  {"id": "heineken-350", "categoria": "CERVEJA", "nome": "CERVEJA HEINEKEN 350 ML"},
+  {"id": "heineken-zero-350", "categoria": "CERVEJA", "nome": "CERVEJA HEINEKEN 0% 350 ML"},
+
+  {"id": "choop-amstel-50l", "categoria": "CHOPE", "nome": "CHOOP BARRIL AMSTEL 50L"},
+  {"id": "choop-heineken-50l", "categoria": "CHOPE", "nome": "CHOOP BARRIL HEINEKEN 50L"},
+
+  {"id": "agua-fontana-510", "categoria": "AGUA", "nome": "AGUA FONTANA DI TREVI 510 ML"},
+  {"id": "agua-tonica-schweppes-350", "categoria": "AGUA", "nome": "AGUA TONICA SCHWEPPES 350 ML"},
+  {"id": "agua-fontana-200", "categoria": "AGUA", "nome": "AGUA FONTANA DI TREVI 200 ML"},
+
+  {"id": "campari-998", "categoria": "DESTILADO", "nome": "CAMPARI 998 ML"},
+
+  {"id": "veuve-clicquot-750", "categoria": "ESPUMANTES", "nome": "VEUVE CLICQUOT 750 ML"},
+  {"id": "chandon-brut-750", "categoria": "ESPUMANTES", "nome": "CHANDON BRUT 750 ML"},
+
+  {"id": "vinho-canale-malbec", "categoria": "VINHO", "nome": "VINHO CANALE DENARIO MALBEC"},
+
+  {"id": "licor-43", "categoria": "LICOR", "nome": "LICOR 43"},
+
+  {"id": "black-label-1l", "categoria": "UISQUE", "nome": "BLACK LABEL 1L"},
+  {"id": "red-label-1l", "categoria": "UISQUE", "nome": "RED LABEL 1L"},
+  {"id": "old-parr-1l", "categoria": "UISQUE", "nome": "OLD PARR 1L"},
+  {"id": "whisky-blonde-750", "categoria": "UISQUE", "nome": "WHISKY BLONDE 750 ML"},
+
+  {"id": "absolut-1l", "categoria": "VODKA", "nome": "VODKA ABSOLUT 1L"},
+  {"id": "smirnoff-1l", "categoria": "VODKA", "nome": "SMIRNOFF"},
+  {"id": "ketel-one-1l", "categoria": "VODKA", "nome": "KETEL ONE 1L"},
+
+  {"id": "tanqueray-1l", "categoria": "GIN", "nome": "TANQUERAY"},
+
+  {"id": "rtd-moscow-mule-330", "categoria": "RTD", "nome": "RTD MOSCOW MULE 330 ML"},
+  {"id": "rtd-watermelon-330", "categoria": "RTD", "nome": "RTD WATERMELON SUGAR 330 ML"},
+  {"id": "rtd-caipirinha-maracuja-330", "categoria": "RTD", "nome": "RTD CAIPIRINHA MARACUJA 330 ML"},
+
+  {"id": "suco-maca-verde-330", "categoria": "SUCO", "nome": "REFRESCO MACA VERDE 330 ML"},
+  {"id": "suco-morango-lichia-330", "categoria": "SUCO", "nome": "REFRESCO MORANGO E LICHIA 330 ML"},
+
+  {"id": "redbull-regular-250", "categoria": "ENERGETICO", "nome": "RED BULL REGULAR 250 ML"},
+  {"id": "redbull-melancia-250", "categoria": "ENERGETICO", "nome": "RED BULL MELANCIA 250 ML"},
+  {"id": "redbull-tropical-250", "categoria": "ENERGETICO", "nome": "RED BULL TROPICAL 250 ML"},
+  {"id": "redbull-zero-250", "categoria": "ENERGETICO", "nome": "RED BULL ZERO 250 ML"},
+
+  {"id": "guarana-antarctica-350", "categoria": "REFRIGERANTE", "nome": "GUARANA ANTARCTICA 350 ML"},
+  {"id": "pepsi-350", "categoria": "REFRIGERANTE", "nome": "PEPSI 350 ML"},
+  {"id": "guarana-antarctica-zero-350", "categoria": "REFRIGERANTE", "nome": "GUARANA ANTARCTICA ZERO 350 ML"},
+  {"id": "pepsi-black-350", "categoria": "REFRIGERANTE", "nome": "PEPSI BLACK 350 ML"},
+
+  {"id": "pitu-1l", "categoria": "CACHACA", "nome": "PITU"},
+  {"id": "velho-barreiro-1l", "categoria": "CACHACA", "nome": "VELHO BARREIRO"},
+  {"id": "cachaca-salinas-1l", "categoria": "CACHACA", "nome": "CACHACA SALINAS"}
+]

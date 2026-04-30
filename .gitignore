@@ -1,3 +1,6 @@
 .DS_Store
 *.log
 node_modules/
+.env
+data/composicoes.sugestoes.json
+data/produtos_vendidos_por_evento.json
