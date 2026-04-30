@@ -1054,13 +1054,19 @@ def _sub_const(html, nome, valor):
 
 
 def injetar_no_html(eventos_out: dict):
-    """Injeta um único `const EVENTOS = {...}` no HTML, substituindo o placeholder.
-
-    Cada chave de eventos_out é um eventoId. Cada valor é um dict com:
-      nome, sessoes, data, dpd, ops, amb, pedidos, pedidos_bar, pedidos_amb,
-      vendas_hora, vendas_min, vendas_min_op_prod, terminais_min, alimentacao
-    """
+    """Injeta `const EVENTOS = {...}`, `const PRODUTOS_ESTOQUE = [...]` e atualiza
+    badges de versao (header + footer) a partir do arquivo VERSION."""
     html = HTML_PATH.read_text(encoding="utf-8")
+
+    # Sincroniza versao no header e footer com o arquivo VERSION
+    version_file = ROOT / "VERSION"
+    if version_file.exists():
+        ver = version_file.read_text(encoding="utf-8").strip()
+        if ver:
+            html = re.sub(r'<span class="doc-version">v[\d.]+</span>',
+                          f'<span class="doc-version">v{ver}</span>', html, count=1)
+            html = re.sub(r'(HOPS — Head of Operations <span[^>]*>· v)[\d.]+( ·)',
+                          rf'\g<1>{ver}\g<2>', html, count=1)
 
     payload = json.dumps(eventos_out, ensure_ascii=False)
     novo = f"const EVENTOS = {payload};"

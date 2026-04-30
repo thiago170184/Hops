@@ -7,6 +7,16 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.9.1] — 2026-04-29
+
+### Fixed
+- Badge de versão no header do dashboard estava hardcoded em v1.8.4 (esquecido na release v1.9.0).
+
+### Changed
+- `build-data.py` agora **sincroniza automaticamente** os badges de versão (header + footer) a partir do arquivo `VERSION`. Evita divergência futura.
+
+---
+
 ## [1.9.0] — 2026-04-29
 
 ### Added
