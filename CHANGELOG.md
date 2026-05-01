@@ -7,6 +7,19 @@ Regra: **versão só é incrementada após o `git push`** (validação local pri
 
 ---
 
+## [1.9.3] — 2026-05-01
+
+### Changed
+- **Data refresh Bragança Zig — fechamento do evento**: novo CSV consolidado da Zig (`Lista de Transações_bragança.csv`, ~32 MB) substitui o anterior. Última transação: **01/05 09:46:32** (vs 30/04 22:45:10 do v1.9.2). Cobre o dia inteiro de 30/04 + manhã de fechamento de 01/05.
+  - **Sessão 30/04 fechada**: 1.546 → **18.844 pedidos únicos** (+17.298). BAR 1.846 → 7.914 · AMB 2.026 → 10.930 · ALIM 1.169 → 10.341.
+  - Sessões 24/04, 25/04 e 26/04 mantêm os mesmos números do v1.9.2 (9.659 · 11.782 · 5.197).
+  - **Total Bragança**: 28.184 → **45.482 pedidos únicos** (+61%) · 78.810 → **117.700 IDs únicos pós-dedup** · 94 → **102 produtos** (+8 SKUs novos no fechamento) · 23 linhas OPS (igual).
+  - Serviços roteados (todas sessões): 8.827 → **10.505 itens** (estacionamento/parques/bilheteria).
+  - Estoque: 67/69 controlados, 26 alvos com consumo, 20 → **27 sem composição** (+7 SKUs novos não catalogados na sessão 30/04).
+- Backup do CSV anterior salvo em `hops-planilhas/braganca-paulista-2026/zig/Lista de Transações.csv.bak-v1.9.2`.
+
+---
+
 ## [1.9.2] — 2026-04-30
 
 ### Changed
